@@ -20,7 +20,7 @@ before_install:
   - time tar -zxvf sequences.tar.gz
   - time curl -O http://sipi.usc.edu/database/textures.tar.gz
   - time tar -zxvf textures.tar.gz
-  - time wget http://sourceforge.net/projects/testimages/files/SAMPLING/testimages.zip/download
+  - time wget -o testimages.zip http://sourceforge.net/projects/testimages/files/SAMPLING/testimages.zip/download
   - time unzip -q testimages.zip
 
 
