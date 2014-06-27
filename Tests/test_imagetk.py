@@ -18,13 +18,15 @@ class TestImageTk(PillowTestCase):
         except (OSError, ImportError) as v:
             self.skipTest(v)
 
+        self.window = Tk()
+
+
     def test_dir(self):
         dir(ImageTk)
 
-    def test_bitmapimage_from_pil_image(self):
+    def test_bitmap_image_from_pil_image(self):
         # Arrange
         im = lena("1")
-        window = Tk()
         w, h = im.size
 
         # Act
@@ -33,6 +35,18 @@ class TestImageTk(PillowTestCase):
         # Assert
         self.assertEqual(h, bitmap_image.height())
         self.assertEqual(w, bitmap_image.width())
+
+    def test_photo_image_from_pil_image(self):
+        # Arrange
+        im = lena()
+        w, h = im.size
+
+        # Act
+        photo_image = ImageTk.PhotoImage(image=im)
+
+        # Assert
+        self.assertEqual(h, photo_image.height())
+        self.assertEqual(w, photo_image.width())
 
 
 if __name__ == '__main__':
