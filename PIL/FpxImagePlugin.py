@@ -21,7 +21,10 @@ __version__ = "0.1"
 
 from PIL import Image, ImageFile
 from PIL.OleFileIO import *
+from PIL import _binary
 
+i8 = _binary.i8
+i32 = _binary.i32le
 
 # we map from colour field tuples to (mode, rawmode) descriptors
 MODES = {
