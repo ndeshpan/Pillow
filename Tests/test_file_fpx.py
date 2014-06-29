@@ -5,7 +5,7 @@ from PIL import Image
 
 class TestFileFpx(PillowTestCase):
 
-    def test_grayscale(self):
+    def test_fpx_grayscale(self):
         # Arrange
         filename = "Tests/images/input_grayscale.fpx"
 
@@ -17,9 +17,9 @@ class TestFileFpx(PillowTestCase):
         self.assertEqual(im.size, (70, 46))
         self.assertEqual(im.mode, "L")
 
-    def test_truecolor(self):
+    def test_fpx_jpeg(self):
         # Arrange
-        filename = "Tests/images/input_truecolor.fpx"
+        filename = "Tests/images/input_jpeg.fpx"
 
         # Act
         im = Image.open(filename)
