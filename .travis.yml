@@ -3,10 +3,13 @@ language: python
 notifications:
   irc: "chat.freenode.net#pil"
 
+env: MAX_CONCURRENCY=4
+
 python:
   - "pypy"
   - 2.6
   - 2.7
+  - "2.7_with_system_site_packages" # For PyQt4
   - 3.2
   - 3.3
   - 3.4
@@ -25,9 +28,11 @@ before_install:
 
 
 install:
-  - "sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev cmake"
+  - "sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev libjpeg-turbo-progs cmake imagemagick"
   - "pip install cffi"
-  - "pip install coveralls"
+  - "pip install coveralls nose"
+  - travis_retry pip install pyroma
+  - if [ "$TRAVIS_PYTHON_VERSION" == "2.6" ]; then pip install unittest2; fi
 
   # webp
   - pushd depends && ./install_webp.sh && popd
@@ -39,17 +44,28 @@ script:
   - coverage erase
   - python setup.py clean
   - python setup.py build_ext --inplace
-  - coverage run --append --include=PIL/* selftest.py
-  - python Tests/run.py --coverage
+
+    # Don't cover PyPy: it fails intermittently and is x5.8 slower (#640)
+  - if [ "$TRAVIS_PYTHON_VERSION" == "pypy" ]; then time python selftest.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" == "pypy" ]; then time nosetests -vx Tests/test_*.py; fi
+
+    # Cover the others
+  - if [ "$TRAVIS_PYTHON_VERSION" != "pypy" ]; then time coverage run --append --include=PIL/* selftest.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "pypy" ]; then time coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py; fi
 
 after_success:
   - coverage report
-  - coveralls
-  - pip install pep8 pyflakes
-  - pep8 PIL/*.py
-  - pyflakes PIL/*.py
+    # No need to send empty coverage to Coveralls for PyPy
+  - if [ "$TRAVIS_PYTHON_VERSION" != "pypy" ]; then coveralls; fi
 
-matrix:
-  allow_failures:
-    - python: "pypy"
-    - python: 3.4
+  - pip install pep8 pyflakes
+  - pep8 --statistics --count PIL/*.py
+  - pep8  --statistics --count Tests/*.py
+  - pyflakes PIL/*.py   | tee >(wc -l)
+  - pyflakes Tests/*.py | tee >(wc -l)
+
+
+    # Coverage and quality reports on just the latest diff.
+    # (Installation is very slow on Py3, so just do it for Py2.)
+  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then Scripts/diffcover-install.sh; fi
+  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then Scripts/diffcover-run.sh; fi

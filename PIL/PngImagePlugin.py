@@ -89,33 +89,33 @@ class ChunkStream:
         "Fetch a new chunk. Returns header information."
 
         if self.queue:
-            cid, pos, len = self.queue[-1]
+            cid, pos, length = self.queue[-1]
             del self.queue[-1]
             self.fp.seek(pos)
         else:
             s = self.fp.read(8)
             cid = s[4:]
             pos = self.fp.tell()
-            len = i32(s)
+            length = i32(s)
 
         if not is_cid(cid):
             raise SyntaxError("broken PNG file (chunk %s)" % repr(cid))
 
-        return cid, pos, len
+        return cid, pos, length
 
     def close(self):
         self.queue = self.crc = self.fp = None
 
-    def push(self, cid, pos, len):
+    def push(self, cid, pos, length):
 
-        self.queue.append((cid, pos, len))
+        self.queue.append((cid, pos, length))
 
-    def call(self, cid, pos, len):
+    def call(self, cid, pos, length):
         "Call the appropriate chunk handler"
 
         if Image.DEBUG:
-            print("STREAM", cid, pos, len)
-        return getattr(self, "chunk_" + cid.decode('ascii'))(pos, len)
+            print("STREAM", cid, pos, length)
+        return getattr(self, "chunk_" + cid.decode('ascii'))(pos, length)
 
     def crc(self, cid, data):
         "Read and verify checksum"
@@ -139,14 +139,25 @@ class ChunkStream:
         cids = []
 
         while True:
-            cid, pos, len = self.read()
+            cid, pos, length = self.read()
             if cid == endchunk:
                 break
-            self.crc(cid, ImageFile._safe_read(self.fp, len))
+            self.crc(cid, ImageFile._safe_read(self.fp, length))
             cids.append(cid)
 
         return cids
 
+# --------------------------------------------------------------------
+# Subclass of string to allow iTXt chunks to look like strings while
+# keeping their extra information
+
+class iTXt(str):
+    @staticmethod
+    def __new__(cls, text, lang, tkey):
+        self = str.__new__(cls, text)
+        self.lang = lang
+        self.tkey = tkey
+        return self
 
 # --------------------------------------------------------------------
 # PNG chunk container (for use with save(pnginfo=))
@@ -159,13 +170,35 @@ class PngInfo:
     def add(self, cid, data):
         self.chunks.append((cid, data))
 
+    def add_itxt(self, key, value, lang="", tkey="", zip=False):
+        if not isinstance(key, bytes):
+            key = key.encode("latin-1", "strict")
+        if not isinstance(value, bytes):
+            value = value.encode("utf-8", "strict")
+        if not isinstance(lang, bytes):
+            lang = lang.encode("utf-8", "strict")
+        if not isinstance(tkey, bytes):
+            tkey = tkey.encode("utf-8", "strict")
+
+        if zip:
+            import zlib
+            self.add(b"iTXt", key + b"\0\x01\0" + lang + b"\0" + tkey + b"\0" + zlib.compress(value))
+        else:
+            self.add(b"iTXt", key + b"\0\0\0" + lang + b"\0" + tkey + b"\0" + value)
+
     def add_text(self, key, value, zip=0):
+        if isinstance(value, iTXt):
+            return self.add_itxt(key, value, value.lang, value.tkey, bool(zip))
+
         # The tEXt chunk stores latin-1 text
+        if not isinstance(value, bytes):
+            try:
+                value = value.encode('latin-1', 'strict')
+            except UnicodeError:
+                return self.add_itxt(key, value, zip=bool(zip))
+
         if not isinstance(key, bytes):
             key = key.encode('latin-1', 'strict')
-
-        if not isinstance(value, bytes):
-            value = value.encode('latin-1', 'replace')
 
         if zip:
             import zlib
@@ -190,10 +223,10 @@ class PngStream(ChunkStream):
         self.im_tile = None
         self.im_palette = None
 
-    def chunk_iCCP(self, pos, len):
+    def chunk_iCCP(self, pos, length):
 
         # ICC profile
-        s = ImageFile._safe_read(self.fp, len)
+        s = ImageFile._safe_read(self.fp, length)
         # according to PNG spec, the iCCP chunk contains:
         # Profile name  1-79 bytes (character string)
         # Null separator        1 byte (null character)
@@ -213,10 +246,10 @@ class PngStream(ChunkStream):
         self.im_info["icc_profile"] = icc_profile
         return s
 
-    def chunk_IHDR(self, pos, len):
+    def chunk_IHDR(self, pos, length):
 
         # image header
-        s = ImageFile._safe_read(self.fp, len)
+        s = ImageFile._safe_read(self.fp, length)
         self.im_size = i32(s), i32(s[4:])
         try:
             self.im_mode, self.im_rawmode = _MODES[(i8(s[8]), i8(s[9]))]
@@ -228,30 +261,30 @@ class PngStream(ChunkStream):
             raise SyntaxError("unknown filter category")
         return s
 
-    def chunk_IDAT(self, pos, len):
+    def chunk_IDAT(self, pos, length):
 
         # image data
         self.im_tile = [("zip", (0,0)+self.im_size, pos, self.im_rawmode)]
-        self.im_idat = len
+        self.im_idat = length
         raise EOFError
 
-    def chunk_IEND(self, pos, len):
+    def chunk_IEND(self, pos, length):
 
         # end of PNG image
         raise EOFError
 
-    def chunk_PLTE(self, pos, len):
+    def chunk_PLTE(self, pos, length):
 
         # palette
-        s = ImageFile._safe_read(self.fp, len)
+        s = ImageFile._safe_read(self.fp, length)
         if self.im_mode == "P":
             self.im_palette = "RGB", s
         return s
 
-    def chunk_tRNS(self, pos, len):
+    def chunk_tRNS(self, pos, length):
 
         # transparency
-        s = ImageFile._safe_read(self.fp, len)
+        s = ImageFile._safe_read(self.fp, length)
         if self.im_mode == "P":
             if _simple_palette.match(s):
                 i = s.find(b"\0")
@@ -265,17 +298,17 @@ class PngStream(ChunkStream):
             self.im_info["transparency"] = i16(s), i16(s[2:]), i16(s[4:])
         return s
 
-    def chunk_gAMA(self, pos, len):
+    def chunk_gAMA(self, pos, length):
 
         # gamma setting
-        s = ImageFile._safe_read(self.fp, len)
+        s = ImageFile._safe_read(self.fp, length)
         self.im_info["gamma"] = i32(s) / 100000.0
         return s
 
-    def chunk_pHYs(self, pos, len):
+    def chunk_pHYs(self, pos, length):
 
         # pixels per unit
-        s = ImageFile._safe_read(self.fp, len)
+        s = ImageFile._safe_read(self.fp, length)
         px, py = i32(s), i32(s[4:])
         unit = i8(s[8])
         if unit == 1: # meter
@@ -285,10 +318,10 @@ class PngStream(ChunkStream):
             self.im_info["aspect"] = px, py
         return s
 
-    def chunk_tEXt(self, pos, len):
+    def chunk_tEXt(self, pos, length):
 
         # text
-        s = ImageFile._safe_read(self.fp, len)
+        s = ImageFile._safe_read(self.fp, length)
         try:
             k, v = s.split(b"\0", 1)
         except ValueError:
@@ -301,10 +334,10 @@ class PngStream(ChunkStream):
             self.im_info[k] = self.im_text[k] = v
         return s
 
-    def chunk_zTXt(self, pos, len):
+    def chunk_zTXt(self, pos, length):
 
         # compressed text
-        s = ImageFile._safe_read(self.fp, len)
+        s = ImageFile._safe_read(self.fp, length)
         try:
             k, v = s.split(b"\0", 1)
         except ValueError:
@@ -327,6 +360,43 @@ class PngStream(ChunkStream):
                 v = v.decode('latin-1', 'replace')
 
             self.im_info[k] = self.im_text[k] = v
+        return s
+
+    def chunk_iTXt(self, pos, length):
+
+        # international text
+        r = s = ImageFile._safe_read(self.fp, length)
+        try:
+            k, r = r.split(b"\0", 1)
+        except ValueError:
+            return s
+        if len(r) < 2:
+            return s
+        cf, cm, r = i8(r[0]), i8(r[1]), r[2:]
+        try:
+            lang, tk, v = r.split(b"\0", 2)
+        except ValueError:
+            return s
+        if cf != 0:
+            if cm == 0:
+                import zlib
+                try:
+                    v = zlib.decompress(v)
+                except zlib.error:
+                    return s
+            else:
+                return s
+        if bytes is not str:
+            try:
+                k = k.decode("latin-1", "strict")
+                lang = lang.decode("utf-8", "strict")
+                tk = tk.decode("utf-8", "strict")
+                v = v.decode("utf-8", "strict")
+            except UnicodeError:
+                return s
+
+        self.im_info[k] = self.im_text[k] = iTXt(v, lang, tk)
+        
         return s
 
 # --------------------------------------------------------------------
@@ -358,16 +428,16 @@ class PngImageFile(ImageFile.ImageFile):
             #
             # get next chunk
 
-            cid, pos, len = self.png.read()
+            cid, pos, length = self.png.read()
 
             try:
-                s = self.png.call(cid, pos, len)
+                s = self.png.call(cid, pos, length)
             except EOFError:
                 break
             except AttributeError:
                 if Image.DEBUG:
-                    print(cid, pos, len, "(unknown)")
-                s = ImageFile._safe_read(self.fp, len)
+                    print(cid, pos, length, "(unknown)")
+                s = ImageFile._safe_read(self.fp, length)
 
             self.png.crc(cid, s)
 
@@ -388,7 +458,7 @@ class PngImageFile(ImageFile.ImageFile):
             rawmode, data = self.png.im_palette
             self.palette = ImagePalette.raw(rawmode, data)
 
-        self.__idat = len # used by load_read()
+        self.__idat = length  # used by load_read()
 
 
     def verify(self):
@@ -413,7 +483,7 @@ class PngImageFile(ImageFile.ImageFile):
 
         ImageFile.ImageFile.load_prepare(self)
 
-    def load_read(self, bytes):
+    def load_read(self, read_bytes):
         "internal: read more image data"
 
         while self.__idat == 0:
@@ -421,23 +491,23 @@ class PngImageFile(ImageFile.ImageFile):
 
             self.fp.read(4) # CRC
 
-            cid, pos, len = self.png.read()
+            cid, pos, length = self.png.read()
 
             if cid not in [b"IDAT", b"DDAT"]:
-                self.png.push(cid, pos, len)
+                self.png.push(cid, pos, length)
                 return b""
 
-            self.__idat = len # empty chunks are allowed
+            self.__idat = length  # empty chunks are allowed
 
         # read more data from this chunk
-        if bytes <= 0:
-            bytes = self.__idat
+        if read_bytes <= 0:
+            read_bytes = self.__idat
         else:
-            bytes = min(bytes, self.__idat)
+            read_bytes = min(read_bytes, self.__idat)
 
-        self.__idat = self.__idat - bytes
+        self.__idat = self.__idat - read_bytes
 
-        return self.fp.read(bytes)
+        return self.fp.read(read_bytes)
 
 
     def load_end(self):
@@ -560,7 +630,7 @@ def _save(im, fp, filename, chunk=putchunk, check=0):
         chunk(fp, b"PLTE", palette_bytes)
 
     transparency = im.encoderinfo.get('transparency',im.info.get('transparency', None))
-    
+
     if transparency or transparency == 0:
         if im.mode == "P":
             # limit to actual palette size
@@ -580,7 +650,7 @@ def _save(im, fp, filename, chunk=putchunk, check=0):
         else:
             if "transparency" in im.encoderinfo:
                 # don't bother with transparency if it's an RGBA
-                # and it's in the info dict. It's probably just stale. 
+                # and it's in the info dict. It's probably just stale.
                 raise IOError("cannot use transparency for this mode")
     else:
         if im.mode == "P" and im.im.getpalettemode() == "RGBA":

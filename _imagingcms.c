@@ -6,6 +6,8 @@
  * http://www.cazabon.com
  * Adapted/reworked for PIL by Fredrik Lundh
  * Copyright (c) 2009 Fredrik Lundh
+ * Updated to LCMS2
+ * Copyright (c) 2013 Eric Soroos
  *
  * pyCMS home page:  http://www.cazabon.com/pyCMS
  * littleCMS home page:  http://www.littlecms.com
@@ -27,12 +29,6 @@ http://www.cazabon.com\n\
 #include "lcms2.h"
 #include "Imaging.h"
 #include "py3.h"
-
-#ifdef WIN32
-#include <windows.h>
-#include <windef.h>
-#include <wingdi.h>
-#endif
 
 #define PYCMSVERSION "1.0.0 pil"
 
@@ -450,7 +446,7 @@ cms_profile_is_intent_supported(CmsProfileObject *self, PyObject *args)
     return PyInt_FromLong(result != 0);
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 static PyObject *
 cms_get_display_profile_win32(PyObject* self, PyObject* args)
 {
@@ -496,7 +492,7 @@ static PyMethodDef pyCMSdll_methods[] = {
     {"createProfile", createProfile, 1},
 
     /* platform specific tools */
-#ifdef WIN32
+#ifdef _WIN32
     {"get_display_profile_win32", cms_get_display_profile_win32, 1},
 #endif
 
