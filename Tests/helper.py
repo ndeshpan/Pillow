@@ -180,13 +180,11 @@ def tostring(im, format, **options):
     return out.getvalue()
 
 
+
 def lena(mode="RGB", cache={}):
     from PIL import Image
     im = None
-    # FIXME: Implement caching to reduce reading from disk but so an original
-    # copy is returned each time and the cached image isn't modified by tests
-    # (for fast, isolated, repeatable tests).
-    # im = cache.get(mode)
+    im = cache.get(mode)
     if im is None:
         if mode == "RGB":
             im = Image.open("Tests/images/lena.ppm")
@@ -196,7 +194,7 @@ def lena(mode="RGB", cache={}):
             im = lena("I").convert(mode)
         else:
             im = lena("RGB").convert(mode)
-    # cache[mode] = im
+    cache[mode] = im
     return im
 
 
