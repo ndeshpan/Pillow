@@ -179,9 +179,10 @@ def tostring(im, format, **options):
     im.save(out, format, **options)
     return out.getvalue()
 
-
-
-def lena(mode="RGB", cache={}):
+cache = {}
+def lena(mode="RGB"):
+    global cache
+    from copy import deepcopy
     from PIL import Image
     im = None
     im = cache.get(mode)
@@ -195,7 +196,8 @@ def lena(mode="RGB", cache={}):
         else:
             im = lena("RGB").convert(mode)
     cache[mode] = im
-    return im
+    copied = deepcopy(im)
+    return copied
 
 
 def command_succeeds(cmd):

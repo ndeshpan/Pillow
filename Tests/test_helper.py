@@ -54,6 +54,11 @@ class TestImage(PillowTestCase):
         # Assert
         self.assert_image_equal(im1, im_original)
 
+    # def test_lena_lots(self):
+        # # Test getting lots, for timing
+        # for i in range(100000):
+            # im = lena()
+
 if __name__ == '__main__':
     unittest.main()
 
