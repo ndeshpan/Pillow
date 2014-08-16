@@ -18,7 +18,8 @@ python:
 install:
   - "sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev libjpeg-turbo-progs cmake imagemagick lcov"
   - "pip install cffi"
-  - "pip install coveralls nose coveralls-merge"
+  - "pip install coveralls coveralls-merge nose"
+  - "pip install nose-timer"
   - "gem install coveralls-lcov"
   - travis_retry pip install pyroma
   - if [ "$TRAVIS_PYTHON_VERSION" == "2.6" ]; then pip install unittest2; fi
@@ -35,7 +36,7 @@ script:
   - CFLAGS="-coverage" python setup.py build_ext --inplace
 
   - time coverage run --append --include=PIL/* selftest.py
-  - coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py
+  - coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py --with-timer
 
 after_success:
    # gather the coverage data
