@@ -24,7 +24,8 @@ install:
   - if [ "$TRAVIS_PYTHON_VERSION" == "2.6" ]; then pip install unittest2; fi
 
   # webp
-  - pushd depends && ./install_webp.sh && popd
+  # - pushd depends && ./install_webp.sh && popd
+  - sudo apt-get install webp
 
   # openjpeg
   - pushd depends && ./install_openjpeg.sh && popd
@@ -41,7 +42,7 @@ after_success:
    # gather the coverage data
   - lcov --capture --directory . -b . --output-file coverage.info
    # filter to remove system headers
-  - lcov --remove coverage.info '/usr/*' -o coverage.filtered.info     
+  - lcov --remove coverage.info '/usr/*' -o coverage.filtered.info
    # convert to json
   - coveralls-lcov -v -n coverage.filtered.info > coverage.c.json
 
