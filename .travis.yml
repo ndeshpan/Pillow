@@ -1,8 +1,5 @@
 language: python
 
-notifications:
-  irc: "chat.freenode.net#pil"
-
 env: MAX_CONCURRENCY=4
 
 python:
@@ -24,8 +21,7 @@ install:
   - if [ "$TRAVIS_PYTHON_VERSION" == "2.6" ]; then pip install unittest2; fi
 
   # webp
-  # - pushd depends && ./install_webp.sh && popd
-  - sudo apt-get install libwebp-dev
+  - pushd depends && ./install_webp.sh && popd
 
   # openjpeg
   - pushd depends && ./install_openjpeg.sh && popd
