@@ -25,7 +25,7 @@ install:
 
   # webp
   # - pushd depends && ./install_webp.sh && popd
-  - sudo apt-get install webp
+  - sudo apt-get install libwebp-dev
 
   # openjpeg
   - pushd depends && ./install_openjpeg.sh && popd
