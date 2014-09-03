@@ -456,8 +456,6 @@ extern int ImagingRawDecode(Imaging im, ImagingCodecState state,
 			    UINT8* buffer, int bytes);
 extern int ImagingRawEncode(Imaging im, ImagingCodecState state,
 			    UINT8* buffer, int bytes);
-extern int ImagingSunRleDecode(Imaging im, ImagingCodecState state,
-			       UINT8* buffer, int bytes);
 extern int ImagingTgaRleDecode(Imaging im, ImagingCodecState state,
 			       UINT8* buffer, int bytes);
 extern int ImagingXbmDecode(Imaging im, ImagingCodecState state,

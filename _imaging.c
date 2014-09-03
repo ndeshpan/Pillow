@@ -3349,7 +3349,6 @@ extern PyObject* PyImaging_PackbitsDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_PcdDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_PcxDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_RawDecoderNew(PyObject* self, PyObject* args);
-extern PyObject* PyImaging_SunRleDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_TgaRleDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_XbmDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_ZipDecoderNew(PyObject* self, PyObject* args);
@@ -3427,7 +3426,6 @@ static PyMethodDef functions[] = {
     {"pcx_encoder", (PyCFunction)PyImaging_PcxEncoderNew, 1},
     {"raw_decoder", (PyCFunction)PyImaging_RawDecoderNew, 1},
     {"raw_encoder", (PyCFunction)PyImaging_RawEncoderNew, 1},
-    {"sun_rle_decoder", (PyCFunction)PyImaging_SunRleDecoderNew, 1},
     {"tga_rle_decoder", (PyCFunction)PyImaging_TgaRleDecoderNew, 1},
     {"xbm_decoder", (PyCFunction)PyImaging_XbmDecoderNew, 1},
     {"xbm_encoder", (PyCFunction)PyImaging_XbmEncoderNew, 1},

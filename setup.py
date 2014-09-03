@@ -34,7 +34,7 @@ _LIB_IMAGING = (
     "ModeFilter", "MspDecode", "Negative", "Offset", "Pack",
     "PackDecode", "Palette", "Paste", "Quant", "QuantOctree", "QuantHash",
     "QuantHeap", "PcdDecode", "PcxDecode", "PcxEncode", "Point",
-    "RankFilter", "RawDecode", "RawEncode", "Storage", "SunRleDecode",
+    "RankFilter", "RawDecode", "RawEncode", "Storage",
     "TgaRleDecode", "Unpack", "UnpackYCC", "UnsharpMask", "XbmDecode",
     "XbmEncode", "ZipDecode", "ZipEncode", "TiffDecode", "Incremental",
     "Jpeg2KDecode", "Jpeg2KEncode")
