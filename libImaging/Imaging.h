@@ -404,8 +404,6 @@ typedef struct ImagingCodecStateInstance *ImagingCodecState;
 typedef int (*ImagingCodec)(Imaging im, ImagingCodecState state,
 			    UINT8* buffer, int bytes);
 
-extern int ImagingBitDecode(Imaging im, ImagingCodecState state,
-			    UINT8* buffer, int bytes);
 extern int ImagingEpsEncode(Imaging im, ImagingCodecState state,
 			    UINT8* buffer, int bytes);
 extern int ImagingFliDecode(Imaging im, ImagingCodecState state,
@@ -508,7 +506,7 @@ struct ImagingCodecStateInstance {
 /* Incremental encoding/decoding support */
 typedef struct ImagingIncrementalCodecStruct *ImagingIncrementalCodec;
 
-typedef int (*ImagingIncrementalCodecEntry)(Imaging im, 
+typedef int (*ImagingIncrementalCodecEntry)(Imaging im,
                                             ImagingCodecState state,
                                             ImagingIncrementalCodec codec);
 

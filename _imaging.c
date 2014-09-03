@@ -370,7 +370,7 @@ getlist(PyObject* arg, int* length, const char* wrong_length, int type)
     void* list;
     PyObject* seq;
     PyObject* op;
-    
+
     if (!PySequence_Check(arg)) {
         PyErr_SetString(PyExc_TypeError, must_be_sequence);
         return NULL;
@@ -392,11 +392,11 @@ getlist(PyObject* arg, int* length, const char* wrong_length, int type)
         PyErr_SetString(PyExc_TypeError, must_be_sequence);
         return NULL;
     }
-    
+
     for (i = 0; i < n; i++) {
         op = PySequence_Fast_GET_ITEM(seq, i);
-        // DRY, branch prediction is going to work _really_ well 
-        // on this switch. And 3 fewer loops to copy/paste. 
+        // DRY, branch prediction is going to work _really_ well
+        // on this switch. And 3 fewer loops to copy/paste.
         switch (type) {
         case TYPE_UINT8:
             itemp = PyInt_AsLong(op);
@@ -3337,7 +3337,6 @@ static PyTypeObject PixelAccess_Type = {
    pluggable codecs, but not before PIL 1.2 */
 
 /* Decoders (in decode.c) */
-extern PyObject* PyImaging_BitDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_FliDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_GifDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_HexDecoderNew(PyObject* self, PyObject* args);
@@ -3402,7 +3401,6 @@ static PyMethodDef functions[] = {
     {"copy", (PyCFunction)_copy2, 1},
 
     /* Codecs */
-    {"bit_decoder", (PyCFunction)PyImaging_BitDecoderNew, 1},
     {"eps_encoder", (PyCFunction)PyImaging_EpsEncoderNew, 1},
     {"fli_decoder", (PyCFunction)PyImaging_FliDecoderNew, 1},
     {"gif_decoder", (PyCFunction)PyImaging_GifDecoderNew, 1},
