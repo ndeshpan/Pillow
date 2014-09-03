@@ -442,8 +442,6 @@ extern int ImagingLibTiffEncode(Imaging im, ImagingCodecState state,
 extern int ImagingMpegDecode(Imaging im, ImagingCodecState state,
 			     UINT8* buffer, int bytes);
 #endif
-extern int ImagingMspDecode(Imaging im, ImagingCodecState state,
-			    UINT8* buffer, int bytes);
 extern int ImagingPackbitsDecode(Imaging im, ImagingCodecState state,
 				 UINT8* buffer, int bytes);
 extern int ImagingPcdDecode(Imaging im, ImagingCodecState state,
