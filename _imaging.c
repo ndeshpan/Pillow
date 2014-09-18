@@ -3345,7 +3345,6 @@ extern PyObject* PyImaging_Jpeg2KDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_TiffLzwDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_LibTiffDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_PackbitsDecoderNew(PyObject* self, PyObject* args);
-extern PyObject* PyImaging_PcdDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_PcxDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_RawDecoderNew(PyObject* self, PyObject* args);
 extern PyObject* PyImaging_TgaRleDecoderNew(PyObject* self, PyObject* args);
@@ -3419,7 +3418,6 @@ static PyMethodDef functions[] = {
     {"libtiff_encoder", (PyCFunction)PyImaging_LibTiffEncoderNew, 1},
 #endif
     {"packbits_decoder", (PyCFunction)PyImaging_PackbitsDecoderNew, 1},
-    {"pcd_decoder", (PyCFunction)PyImaging_PcdDecoderNew, 1},
     {"pcx_decoder", (PyCFunction)PyImaging_PcxDecoderNew, 1},
     {"pcx_encoder", (PyCFunction)PyImaging_PcxEncoderNew, 1},
     {"raw_decoder", (PyCFunction)PyImaging_RawDecoderNew, 1},

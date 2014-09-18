@@ -33,7 +33,7 @@ _LIB_IMAGING = (
     "Histo", "JpegDecode", "JpegEncode", "LzwDecode", "Matrix",
     "ModeFilter", "Negative", "Offset", "Pack",
     "PackDecode", "Palette", "Paste", "Quant", "QuantOctree", "QuantHash",
-    "QuantHeap", "PcdDecode", "PcxDecode", "PcxEncode", "Point",
+    "QuantHeap", "PcxDecode", "PcxEncode", "Point",
     "RankFilter", "RawDecode", "RawEncode", "Storage",
     "TgaRleDecode", "Unpack", "UnpackYCC", "UnsharpMask", "XbmDecode",
     "XbmEncode", "ZipDecode", "ZipEncode", "TiffDecode", "Incremental",

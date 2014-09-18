@@ -444,8 +444,6 @@ extern int ImagingMpegDecode(Imaging im, ImagingCodecState state,
 #endif
 extern int ImagingPackbitsDecode(Imaging im, ImagingCodecState state,
 				 UINT8* buffer, int bytes);
-extern int ImagingPcdDecode(Imaging im, ImagingCodecState state,
-			    UINT8* buffer, int bytes);
 extern int ImagingPcxDecode(Imaging im, ImagingCodecState state,
 			    UINT8* buffer, int bytes);
 extern int ImagingPcxEncode(Imaging im, ImagingCodecState state,
