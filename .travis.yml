@@ -34,7 +34,9 @@ install:
   - if [ "$TRAVIS_PYTHON_VERSION" == "2.6" ]; then travis_retry pip install unittest2; fi
 
   # Qt5
-  - pushd depends && ./install_qt5.sh && popd
+  - qmake -qt=qt5 -v
+  - qmake -qt=qt5
+  - make
 
   # webp
   - pushd depends && ./install_webp.sh && popd
