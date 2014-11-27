@@ -18,6 +18,11 @@ python:
   - 3.2
   - 3.3
 
+before_install:
+  - sudo add-apt-repository --yes ppa:ubuntu-sdk-team/ppa
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq qt5-qmake qtbase5-dev qtdeclarative5-dev libqt5webkit5-dev libsqlite3-dev
+
 install:
   - "travis_retry sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev libjpeg-turbo-progs cmake imagemagick"
   - "travis_retry pip install cffi"
