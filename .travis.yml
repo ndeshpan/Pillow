@@ -28,6 +28,8 @@ install:
 
   - if [ "$TRAVIS_PYTHON_VERSION" == "2.6" ]; then travis_retry pip install unittest2; fi
 
+  - travis_retry pip install PySide
+
   # webp
   - pushd depends && ./install_webp.sh && popd
 
