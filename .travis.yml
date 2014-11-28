@@ -18,7 +18,8 @@ python:
 install:
   - "sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev libjpeg-turbo-progs cmake imagemagick lcov"
   - "pip install cffi"
-  - "pip install coveralls coveralls-merge nose nose-timer"
+  - "pip install coveralls coveralls-merge nose"
+  - "pip install git+git://github.com/mahmoudimus/nose-timer.git"
   - "gem install coveralls-lcov"
   - travis_retry pip install pyroma
   - if [ "$TRAVIS_PYTHON_VERSION" == "2.6" ]; then pip install unittest2; fi
@@ -41,7 +42,7 @@ after_success:
    # gather the coverage data
   - lcov --capture --directory . -b . --output-file coverage.info
    # filter to remove system headers
-  - lcov --remove coverage.info '/usr/*' -o coverage.filtered.info     
+  - lcov --remove coverage.info '/usr/*' -o coverage.filtered.info
    # convert to json
   - coveralls-lcov -v -n coverage.filtered.info > coverage.c.json
 
