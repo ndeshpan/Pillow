@@ -19,14 +19,14 @@ from distutils import sysconfig
 from setuptools import Extension, setup, find_packages
 
 # monkey patch import hook. Even though flake8 says it's not used, it is.
-# comment this out to disable multi threaded builds. 
+# comment this out to disable multi threaded builds.
 import mp_compile
 
 _IMAGING = (
     "decode", "encode", "map", "display", "outline", "path")
 
 _LIB_IMAGING = (
-    "Access", "AlphaComposite", "Antialias", "Bands", "BitDecode", "Blend",
+    "Access", "AlphaComposite", "Resample", "Bands", "BitDecode", "Blend",
     "Chops", "Convert", "ConvertYCbCr", "Copy", "Crc32", "Crop", "Dib", "Draw",
     "Effects", "EpsEncode", "File", "Fill", "Filter", "FliDecode",
     "Geometry", "GetBBox", "GifDecode", "GifEncode", "HexDecode",
@@ -37,7 +37,7 @@ _LIB_IMAGING = (
     "RankFilter", "RawDecode", "RawEncode", "Storage", "SunRleDecode",
     "TgaRleDecode", "Unpack", "UnpackYCC", "UnsharpMask", "XbmDecode",
     "XbmEncode", "ZipDecode", "ZipEncode", "TiffDecode", "Incremental",
-    "Jpeg2KDecode", "Jpeg2KEncode")
+    "Jpeg2KDecode", "Jpeg2KEncode", "BoxBlur")
 
 
 def _add_directory(path, dir, where=None):
@@ -90,7 +90,7 @@ except (ImportError, OSError):
 
 
 NAME = 'Pillow'
-PILLOW_VERSION = '2.5.0'
+PILLOW_VERSION = '2.6.0'
 TCL_ROOT = None
 JPEG_ROOT = None
 JPEG2K_ROOT = None
@@ -410,7 +410,7 @@ class pil_build_ext(build_ext):
             for directory in self.compiler.include_dirs:
                 try:
                     listdir = os.listdir(directory)
-                except Exception:  
+                except Exception:
                     # WindowsError, FileNotFoundError
                     continue
                 for name in listdir:
@@ -487,6 +487,8 @@ class pil_build_ext(build_ext):
                 # In Google's precompiled zip it is call "libwebp":
                 if _find_library_file(self, "webp"):
                     feature.webp = "webp"
+                elif _find_library_file(self, "libwebp"):
+                    feature.webp = "libwebp"
 
         if feature.want('webpmux'):
             if (_find_include_file(self, "webp/mux.h") and
@@ -494,6 +496,9 @@ class pil_build_ext(build_ext):
                 if (_find_library_file(self, "webpmux") and
                         _find_library_file(self, "webpdemux")):
                     feature.webpmux = "webpmux"
+                if (_find_library_file(self, "libwebpmux") and
+                        _find_library_file(self, "libwebpdemux")):
+                    feature.webpmux = "libwebpmux"
 
         for f in feature:
             if not getattr(feature, f) and feature.require(f):
@@ -559,13 +564,13 @@ class pil_build_ext(build_ext):
                 libraries=["lcms2"] + extra))
 
         if os.path.isfile("_webp.c") and feature.webp:
-            libs = ["webp"]
+            libs = [feature.webp]
             defs = []
 
             if feature.webpmux:
                 defs.append(("HAVE_WEBPMUX", None))
-                libs.append("webpmux")
-                libs.append("webpdemux")
+                libs.append(feature.webpmux)
+                libs.append(feature.webpmux.replace('pmux','pdemux'))
 
             exts.append(Extension(
                 "PIL._webp", ["_webp.c"], libraries=libs, define_macros=defs))
@@ -721,9 +726,7 @@ setup(
     name=NAME,
     version=PILLOW_VERSION,
     description='Python Imaging Library (Fork)',
-    long_description=(
-        _read('README.rst') + b'\n' +
-        _read('CHANGES.rst')).decode('utf-8'),
+    long_description=_read('README.rst').decode('utf-8'),
     author='Alex Clark (fork author)',
     author_email='aclark@aclark.net',
     url='http://python-pillow.github.io/',

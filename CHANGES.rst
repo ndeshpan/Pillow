@@ -1,8 +1,137 @@
 Changelog (Pillow)
 ==================
 
-2.6.0 (unreleased)
+2.7.0 (unreleased)
 ------------------
+
+- The GIF Palette optimization algorithm is only applicable to mode='P' or 'L' #993
+  [moriyoshi]
+
+- Use PySide as an alernative to PyQt4/5.
+  [holg]
+
+- Replace affine-based im.resize implementation with convolution-based im.stretch #997
+  [homm]
+
+- Replace Gaussian Blur implementation with iterated fast box blur. #961  Note: Radius parameter is interpreted differently than before.
+  [homm]
+
+- Better docs explaining import _imaging failure #1016, build #1017, mode #1018, PyAccess, PixelAccess objects #1019 Image.quantize #1020 and Image.save #1021
+  [wiredfool]
+
+- Fix for saving TIFF image into an io.BytesIO buffer #1011
+  [mfergie]
+  
+- Fix antialias compilation on debug versions of Python #1010
+  [wiredfool]
+
+- Fix for Image.putdata segfault #1009
+  [wiredfool]
+
+- Ico save, additional tests #1007
+  [exherb]
+
+- Use PyQt4 if it has already been imported, otherwise prefer PyQt5. #1003
+  [AurelienBallier]
+  
+- Speedup resample implementation up to 2.5 times. #977
+  [homm]
+
+- Speed up rotation by using cache aware loops, added transpose to rotations. #994
+  [homm]
+
+- Fix Bicubic interpolation #970
+  [homm]
+
+- Support for 4-bit greyscale TIFF images #980
+  [hugovk]
+
+- Updated manifest #957
+  [wiredfool]
+
+- Fix PyPy 2.4 regression #952
+  [wiredfool]
+
+- Webp Metadata Skip Test comments #954
+  [wiredfool]
+  
+- Fixes for things rpmlint complains about #942
+  [manisandro]
+
+2.6.1 (2014-10-11)
+------------------
+
+- Fix SciPy regression in Image.resize #945
+  [wiredfool]
+  
+- Fix manifest to include all test files.
+  [aclark]
+
+2.6.0 (2014-10-01)
+------------------
+
+- Relax precision of ImageDraw tests for x86, GimpGradient for PPC
+  [wiredfool]
+
+2.6.0-rc1 (2014-09-29)
+----------------------
+
+- Use redistributable image for testing #884
+  [hugovk]
+
+- Use redistributable ICC profiles for testing, skip if not available #923
+  [wiredfool]
+  
+- Additional documentation for JPEG info and save options #890
+  [wiredfool]
+
+- Fix JPEG Encoding memory leak when exif or qtables were specified
+  [wiredfool]
+  
+- Image.tobytes() and Image.tostring() documentation update #916 #917
+  [mgedmin]
+
+- On Windows, do not execute convert.exe without specifying path #912
+  [cgohlke]
+
+- Fix msvc build error #911
+  [cgohlke]
+
+- Fix for handling P + transparency -> RGBA conversions #904
+  [wiredfool]
+
+- Retain alpha in ImageEnhance operations #909
+  [wiredfool]
+
+- Jpeg2k Decode/encode memory leak fix #898
+  [joshware, wiredfool]
+
+- EpsFilePlugin Speed improvements #886
+  [wiredfool, karstenw]
+
+- Don't resize if already the right size #892
+  [radarhere]
+
+- Fix for reading multipage TIFFs #885
+  [kostrom, wiredfool]
+
+- Correctly handle saving gray and CMYK JPEGs with quality=keep #857
+  [etienned]
+
+- Correct duplicate Tiff Metadata and Exif tag values
+  [hugovk]
+
+- Windows fixes #871
+  [wiredfool]
+
+- Fix TGA files with image ID field #856
+  [megabuz]
+
+- Fixed wrong P-mode of small, unoptimized L-mode GIF #843
+  [uvNikita]
+
+- Fixed CVE-2014-3598, a DOS in the Jpeg2KImagePlugin
+  [Andrew Drake]
 
 - Fixed CVE-2014-3589, a DOS in the IcnsImagePlugin
   [Andrew Drake]
@@ -46,7 +175,7 @@ Changelog (Pillow)
 - Added docs for ExifTags
   [Wintermute3]
 
-- More tests for CurImagePlugin, DcxImagePlugin, ImageFont, ImageMath, ImagePalette, IptcImagePlugin, SpiderImagePlugin, SgiImagePlugin, XpmImagePlugin and _util
+- More tests for CurImagePlugin, DcxImagePlugin, Effects.c, GimpGradientFile, ImageFont, ImageMath, ImagePalette, IptcImagePlugin, SpiderImagePlugin, SgiImagePlugin, XpmImagePlugin and _util
   [hugovk]
 
 - Fix return value of FreeTypeFont.textsize() does not include font offsets
@@ -60,6 +189,12 @@ Changelog (Pillow)
 
 - Test PalmImagePlugin and method to skip known bad tests #776
   [hugovk, wiredfool]
+
+2.5.3 (2014-08-18)
+------------------
+
+- Fixed CVE-2014-3598, a DOS in the Jpeg2KImagePlugin (backport)
+  [Andrew Drake]
 
 
 2.5.2 (2014-08-13)

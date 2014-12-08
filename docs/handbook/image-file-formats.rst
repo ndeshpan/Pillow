@@ -117,26 +117,54 @@ converting ``RGB`` images to ``L``, and resize images to 1/2, 1/4 or 1/8 of
 their original size while loading them. The :py:meth:`~PIL.Image.Image.draft`
 method also configures the JPEG decoder to trade some quality for speed.
 
-The :py:meth:`~PIL.Image.Image.open` method sets the following
-:py:attr:`~PIL.Image.Image.info` properties:
+The :py:meth:`~PIL.Image.Image.open` method may set the following
+:py:attr:`~PIL.Image.Image.info` properties if available:
 
 **jfif**
     JFIF application marker found. If the file is not a JFIF file, this key is
     not present.
 
+**jfif_version**
+    A tuple representing the jfif version, (major version, minor version). 
+
+**jfif_density**
+    A tuple representing the pixel density of the image, in units specified
+    by jfif_unit.
+
+**jfif_unit**
+    Units for the jfif_density:
+
+    * 0 - No Units
+    * 1 - Pixels per Inch
+    * 2 - Pixels per Centimeter
+
+**dpi**
+    A tuple representing the reported pixel density in pixels per inch, if 
+    the file is a jfif file and the units are in inches. 
+
 **adobe**
     Adobe application marker found. If the file is not an Adobe JPEG file, this
     key is not present.
 
+**adobe_transform**
+    Vendor Specific Tag.
+
 **progression**
     Indicates that this is a progressive JPEG file.
+
+**icc-profile**
+    The ICC color profile for the image.  
+
+**exif**
+    Raw EXIF data from the image. 
+
 
 The :py:meth:`~PIL.Image.Image.save` method supports the following options:
 
 **quality**
     The image quality, on a scale from 1 (worst) to 95 (best). The default is
     75. Values above 95 should be avoided; 100 disables portions of the JPEG
-    compression algorithm, and results in large files with hardly any gain in =
+    compression algorithm, and results in large files with hardly any gain in
     image quality.
 
 **optimize**
@@ -146,6 +174,19 @@ The :py:meth:`~PIL.Image.Image.save` method supports the following options:
 **progressive**
     If present, indicates that this image should be stored as a progressive
     JPEG file.
+
+**dpi**
+    A tuple of integers representing the pixel density, ``(x,y)``.
+
+**icc-profile** 
+    If present, the image is stored with the provided ICC profile. If
+    this parameter is not provided, the image will be saved with no
+    profile attached. To preserve the existing profile::
+
+        im.save(filename, 'jpeg', icc_profile=im.info.get('icc_profile'))
+
+**exif**
+    If present, the image will be stored with the provided raw EXIF data. 
 
 **subsampling**
     If present, sets the subsampling for the encoder. 
@@ -291,6 +332,9 @@ The :py:meth:`~PIL.Image.Image.open` method sets the following
     Transparency color index. This key is omitted if the image is not a
     transparent palette image.
 
+``Open`` also sets ``Image.text`` to a list of the values of the
+``tEXt``, ``zTXt``, and ``iTXt`` chunks of the PNG image.
+
 The :py:meth:`~PIL.Image.Image.save` method supports the following options:
 
 **optimize**
@@ -301,6 +345,12 @@ The :py:meth:`~PIL.Image.Image.save` method supports the following options:
 **transparency** 
     For ``P``, ``L``, and ``RGB`` images, this option controls what
     color image to mark as transparent.
+
+**dpi**
+    A tuple of two numbers corresponding to the desired dpi in each direction. 
+
+**pnginfo**
+    A :py:class:`PIL.PngImagePlugin.PngInfo` instance containing text tags.
 
 **bits (experimental)**
     For ``P`` images, this option controls how many bits to store. If omitted,
@@ -356,9 +406,9 @@ the output format must be specified explicitly::
     im.save('newimage.spi', format='SPIDER')
 
 For more information about the SPIDER image processing package, see the
-`SPIDER home page`_ at `Wadsworth Center`_.
+`SPIDER homepage`_ at `Wadsworth Center`_.
 
-.. _SPIDER home page: http://www.wadsworth.org/spider_doc/spider/docs/master.html
+.. _SPIDER homepage: http://spider.wadsworth.org/spider_doc/spider/docs/spider.html
 .. _Wadsworth Center: http://www.wadsworth.org/
 
 TIFF
@@ -548,6 +598,14 @@ ICO
 
 ICO is used to store icons on Windows. The largest available icon is read.
 
+The :py:meth:`~PIL.Image.Image.save` method supports the following options:
+
+**sizes**
+    A list of sizes including in this ico file; these are a 2-tuple,
+    ``(width, height)``; Default to ``[(16, 16), (24, 24), (32, 32), (48, 48),
+    (64, 64), (128, 128), (255, 255)]``. Any size is bigger then the original
+    size or 255 will be ignored.
+
 ICNS
 ^^^^
 
@@ -670,6 +728,7 @@ files, using either JPEG or HEX encoding depending on the image mode (and
 whether JPEG support is available or not).
 
 PIXAR (read only)
+^^^^^^^^^^^^^^^^^
 
 PIL provides limited support for PIXAR raster files. The library can identify
 and read “dumped” RGB files.

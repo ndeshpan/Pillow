@@ -54,6 +54,7 @@ import sys
 import collections
 import itertools
 import os
+import io
 
 # Set these to true to force use of libtiff for reading or writing.
 READ_LIBTIFF = False
@@ -149,6 +150,7 @@ OPEN_INFO = {
     (II, 0, 1, 2, (8,), ()): ("L", "L;IR"),
     (II, 0, 3, 1, (32,), ()): ("F", "F;32F"),
     (II, 1, 1, 1, (1,), ()): ("1", "1"),
+    (II, 1, 1, 1, (4,), ()): ("L", "L;4"),
     (II, 1, 1, 2, (1,), ()): ("1", "1;R"),
     (II, 1, 1, 1, (8,), ()): ("L", "L"),
     (II, 1, 1, 1, (8, 8), (2,)): ("LA", "LA"),
@@ -281,6 +283,7 @@ class ImageFileDirectory(collections.MutableMapping):
         self.tagdata = {}
         self.tagtype = {}  # added 2008-06-05 by Florian Hoech
         self.next = None
+        self.offset = None
 
     def __str__(self):
         return str(self.as_dict())
@@ -415,6 +418,7 @@ class ImageFileDirectory(collections.MutableMapping):
         # load tag dictionary
 
         self.reset()
+        self.offset = fp.tell()
 
         i16 = self.i16
         i32 = self.i32
@@ -446,7 +450,11 @@ class ImageFileDirectory(collections.MutableMapping):
             # Get and expand tag value
             if size > 4:
                 here = fp.tell()
+                if Image.DEBUG:
+                    print("Tag Location: %s" % here)
                 fp.seek(i32(ifd, 8))
+                if Image.DEBUG:
+                    print("Data Location: %s" % fp.tell())
                 data = ImageFile._safe_read(fp, size)
                 fp.seek(here)
             else:
@@ -630,18 +638,20 @@ class TiffImageFile(ImageFile.ImageFile):
 
     def seek(self, frame):
         "Select a given frame as current image"
-
         if frame < 0:
             frame = 0
         self._seek(frame)
+        # Create a new core image object on second and
+        # subsequent frames in the image. Image may be
+        # different size/mode.
+        Image._decompression_bomb_check(self.size)
+        self.im = Image.core.new(self.mode, self.size)
 
     def tell(self):
         "Return the current frame number"
-
         return self._tell()
 
     def _seek(self, frame):
-
         self.fp = self.__fp
         if frame < self.__frame:
             # rewind file
@@ -650,14 +660,21 @@ class TiffImageFile(ImageFile.ImageFile):
         while self.__frame < frame:
             if not self.__next:
                 raise EOFError("no more images in TIFF file")
+            if Image.DEBUG:
+                print("Seeking to frame %s, on frame %s, __next %s, location: %s" %
+                      (frame, self.__frame, self.__next, self.fp.tell()))
+            # reset python3 buffered io handle in case fp
+            # was passed to libtiff, invalidating the buffer
+            self.fp.tell()
             self.fp.seek(self.__next)
+            if Image.DEBUG:
+                print("Loading tags, location: %s" % self.fp.tell())
             self.tag.load(self.fp)
             self.__next = self.tag.next
             self.__frame += 1
         self._setup()
 
     def _tell(self):
-
         return self.__frame
 
     def _decoder(self, rawmode, layer, tile=None):
@@ -706,6 +723,7 @@ class TiffImageFile(ImageFile.ImageFile):
         # (self._compression, (extents tuple),
         #   0, (rawmode, self._compression, fp))
         ignored, extents, ignored_2, args = self.tile[0]
+        args = args + (self.ifd.offset,)
         decoder = Image._getdecoder(self.mode, 'libtiff', args,
                                     self.decoderconfig)
         try:
@@ -744,7 +762,8 @@ class TiffImageFile(ImageFile.ImageFile):
         self.readonly = 0
         # libtiff closed the fp in a, we need to close self.fp, if possible
         if hasattr(self.fp, 'close'):
-            self.fp.close()
+            if not self.__next:
+                self.fp.close()
         self.fp = None  # might be shared
 
         if err < 0:
@@ -866,6 +885,10 @@ class TiffImageFile(ImageFile.ImageFile):
                 try:
                     fp = hasattr(self.fp, "fileno") and \
                         os.dup(self.fp.fileno())
+                    # flush the file descriptor, prevents error on pypy 2.4+
+                    # should also eliminate the need for fp.tell for py3
+                    # in _seek
+                    self.fp.flush()
                 except IOError:
                     # io.BytesIO have a fileno, but returns an IOError if
                     # it doesn't use a file descriptor.
@@ -1106,8 +1129,11 @@ def _save(im, fp, filename):
             print (ifd.items())
         _fp = 0
         if hasattr(fp, "fileno"):
-            fp.seek(0)
-            _fp = os.dup(fp.fileno())
+            try:
+                fp.seek(0)
+                _fp = os.dup(fp.fileno())
+            except io.UnsupportedOperation:
+                pass
 
         # ICC Profile crashes.
         blocklist = [STRIPOFFSETS, STRIPBYTECOUNTS, ROWSPERSTRIP, ICCPROFILE]
@@ -1132,8 +1158,11 @@ def _save(im, fp, filename):
                     # following tiffcp.c->cpTag->TIFF_RATIONAL
                     atts[k] = float(v[0][0])/float(v[0][1])
                     continue
-                if type(v) == tuple and len(v) > 2:
+                if (type(v) == tuple and
+                        (len(v) > 2 or
+                            (len(v) == 2 and v[1] == 0))):
                     # List of ints?
+                    # Avoid divide by zero in next if-clause
                     if type(v[0]) in (int, float):
                         atts[k] = list(v)
                     continue

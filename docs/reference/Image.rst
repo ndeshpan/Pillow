@@ -41,7 +41,7 @@ Create thumbnails
     for infile in glob.glob("*.jpg"):
         file, ext = os.path.splitext(infile)
         im = Image.open(infile)
-        im.thumbnail(size, Image.ANTIALIAS)
+        im.thumbnail(size)
         im.save(file + ".thumbnail", "JPEG")
 
 Functions
@@ -116,6 +116,7 @@ ITU-R 709, using the D65 luminant) to the CIE XYZ color space:
 .. automethod:: PIL.Image.Image.getcolors
 .. automethod:: PIL.Image.Image.getdata
 .. automethod:: PIL.Image.Image.getextrema
+.. automethod:: PIL.Image.Image.getpalette
 .. automethod:: PIL.Image.Image.getpixel
 .. automethod:: PIL.Image.Image.histogram
 .. automethod:: PIL.Image.Image.offset
@@ -135,6 +136,7 @@ ITU-R 709, using the D65 luminant) to the CIE XYZ color space:
 .. automethod:: PIL.Image.Image.tell
 .. automethod:: PIL.Image.Image.thumbnail
 .. automethod:: PIL.Image.Image.tobitmap
+.. automethod:: PIL.Image.Image.tobytes
 .. automethod:: PIL.Image.Image.tostring
 .. automethod:: PIL.Image.Image.transform
 .. automethod:: PIL.Image.Image.transpose
@@ -162,7 +164,7 @@ Instances of the :py:class:`Image` class have the following attributes:
 
     Image mode. This is a string specifying the pixel format used by the image.
     Typical values are “1”, “L”, “RGB”, or “CMYK.” See
-    :doc:`../handbook/concepts` for a full list.
+    :ref:`concept-modes` for a full list.
 
     :type: :py:class:`string`
 
@@ -190,5 +192,7 @@ Instances of the :py:class:`Image` class have the following attributes:
     keys are not standardized, it’s not possible for a method to know if the
     operation affects the dictionary. If you need the information later on,
     keep a reference to the info dictionary returned from the open method.
+
+    Unless noted elsewhere, this dictionary does not affect saving files. 
 
     :type: :py:class:`dict`
