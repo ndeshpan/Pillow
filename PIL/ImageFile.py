@@ -88,10 +88,12 @@ class ImageFile(Image.Image):
             # filename
             self.fp = open(fp, "rb")
             self.filename = fp
+            self._fp_closable = True
         else:
             # stream
             self.fp = fp
             self.filename = filename
+            self._fp_closable = False
 
         try:
             self._open()
@@ -240,7 +242,10 @@ class ImageFile(Image.Image):
         self.tile = []
         self.readonly = readonly
 
-        self.fp = None  # might be shared
+        # We only want to close the fp if ImageFile opened it,
+        # and not if an fp was passed in
+        if self._fp_closable:
+            self.fp = None  # might be shared
 
         if not self.map and (not LOAD_TRUNCATED_IMAGES or t == 0) and e < 0:
             # still raised if decoder fails to return anything
