@@ -13,7 +13,7 @@ addons:
     - imagemagick
     - libffi-dev
     - libfreetype6-dev
-    - libjpeg-turbo
+    - libjpeg-turbo8
     - liblcms2-2
     - python-qt4
 
