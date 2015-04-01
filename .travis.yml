@@ -5,6 +5,18 @@ notifications:
 
 sudo: false
 
+addons:
+  apt:
+    packages:
+      cmake
+      ghostscript
+      imagemagick
+      libffi-dev
+      libfreetype6-dev
+      libjpeg-turbo-progs
+      liblcms2-dev
+      python-qt4
+
 # Run slow PyPy* first, to give them a headstart and reduce waiting time.
 # Run latest 3.x and 2.x next, to get quick compatibility results.
 # Then run the remainder.
@@ -19,7 +31,6 @@ python:
   - 3.3
 
 install:
-  - "travis_retry sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev libjpeg-turbo-progs cmake imagemagick"
   - "travis_retry pip install cffi"
   - "travis_retry pip install coverage nose"
 
