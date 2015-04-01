@@ -13,8 +13,8 @@ addons:
     - imagemagick
     - libffi-dev
     - libfreetype6-dev
-    - libjpeg-turbo-progs
-    - liblcms2-dev
+    - libjpeg-turbo
+    - liblcms2-2
     - python-qt4
 
 # Run slow PyPy* first, to give them a headstart and reduce waiting time.
