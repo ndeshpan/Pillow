@@ -8,14 +8,14 @@ sudo: false
 addons:
   apt:
     packages:
-      cmake
-      ghostscript
-      imagemagick
-      libffi-dev
-      libfreetype6-dev
-      libjpeg-turbo-progs
-      liblcms2-dev
-      python-qt4
+    - cmake
+    - ghostscript
+    - imagemagick
+    - libffi-dev
+    - libfreetype6-dev
+    - libjpeg-turbo-progs
+    - liblcms2-dev
+    - python-qt4
 
 # Run slow PyPy* first, to give them a headstart and reduce waiting time.
 # Run latest 3.x and 2.x next, to get quick compatibility results.
