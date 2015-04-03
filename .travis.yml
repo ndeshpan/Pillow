@@ -17,7 +17,7 @@ python:
   - 3.3
 
 install:
-  - "travis_retry sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev libjpeg-turbo-progs cmake imagemagick"
+  - "travis_retry sudo apt-get -qq install openjpeg2 libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev libjpeg-turbo-progs cmake imagemagick "
   - "travis_retry pip install cffi"
   - "travis_retry pip install coverage nose"
 
@@ -30,7 +30,7 @@ install:
   - pushd depends && ./install_webp.sh && popd
 
   # openjpeg
-  - pushd depends && ./install_openjpeg.sh && popd
+  # - pushd depends && ./install_openjpeg.sh && popd
 
 script:
   - coverage erase
