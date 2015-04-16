@@ -402,7 +402,8 @@ def init():
 # --------------------------------------------------------------------
 # Codec factories (used by tobytes/frombytes and ImageFile.load)
 
-def _getdecoder(mode, decoder_name, args, extra=()):
+def _getcoder(coder_type, mode, coder_name, args, extra=()):
+    """ For getting an encoder or decoder """
 
     # tweak arguments
     if args is None:
@@ -411,29 +412,20 @@ def _getdecoder(mode, decoder_name, args, extra=()):
         args = (args,)
 
     try:
-        # get decoder
-        decoder = getattr(core, decoder_name + "_decoder")
-        # print(decoder, mode, args + extra)
-        return decoder(mode, *args + extra)
+        # get coder
+        coder = getattr(core, coder_name + "_" + coder_type)
+        # print(coder, mode, args + extra)
+        return coder(mode, *args + extra)
     except AttributeError:
-        raise IOError("decoder %s not available" % decoder_name)
+        raise IOError("%s %s not available" % coder_type, coder_name)
+
+
+def _getdecoder(mode, decoder_name, args, extra=()):
+    return _getcoder("decoder", mode, decoder_name, args, extra=())
 
 
 def _getencoder(mode, encoder_name, args, extra=()):
-
-    # tweak arguments
-    if args is None:
-        args = ()
-    elif not isinstance(args, tuple):
-        args = (args,)
-
-    try:
-        # get encoder
-        encoder = getattr(core, encoder_name + "_encoder")
-        # print(encoder, mode, args + extra)
-        return encoder(mode, *args + extra)
-    except AttributeError:
-        raise IOError("encoder %s not available" % encoder_name)
+    return _getcoder("encoder", mode, encoder_name, args, extra=())
 
 
 # --------------------------------------------------------------------
