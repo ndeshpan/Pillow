@@ -35,7 +35,7 @@ class TestJpegLeaks(PillowTestCase):
                 test_output = BytesIO()
                 im.save(test_output, "JPEG2000")
                 test_output.seek(0)
-                output = test_output.read()
+                test_output.read()
 
 
 if __name__ == '__main__':

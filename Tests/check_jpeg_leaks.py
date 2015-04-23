@@ -1,5 +1,4 @@
 from helper import unittest, PillowTestCase, hopper
-from PIL import Image
 from io import BytesIO
 import sys
 
@@ -71,7 +70,7 @@ post-patch:
      | :@:@@: :#:::@ :::@::::@ : :: : @ :::::: :@:: ::: :::: @:: @:::::::@::::
    0 +----------------------------------------------------------------------->Gi
      0                                                                   8.421
- 
+
 """
 
 
@@ -103,7 +102,7 @@ post-patch:
         qtables = [standard_l_qtable,
                    standard_chrominance_qtable]
 
-        
+
         for count in range(iterations):
             test_output = BytesIO()
             im.save(test_output, "JPEG", qtables=qtables)
@@ -135,7 +134,7 @@ pre patch:
    0 +----------------------------------------------------------------------->Gi
      0                                                                   11.37
 
-    
+
 post patch:
 
     MB

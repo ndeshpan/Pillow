@@ -1,7 +1,6 @@
 from helper import unittest, PillowTestCase, hopper
 
 try:
-    import cffi
     from PIL import PyAccess
 except:
     # Skip in setUp()
@@ -20,6 +19,7 @@ class TestCffiPutPixel(TestImagePutPixel):
     def setUp(self):
         try:
             import cffi
+            assert cffi  # silence warnings
         except:
             self.skipTest("No cffi")
 
@@ -32,6 +32,7 @@ class TestCffiGetPixel(TestImageGetPixel):
     def setUp(self):
         try:
             import cffi
+            assert cffi  # silence warnings
         except:
             self.skipTest("No cffi")
 
@@ -45,6 +46,7 @@ class TestCffi(PillowTestCase):
     def setUp(self):
         try:
             import cffi
+            assert cffi  # silence warnings
         except:
             self.skipTest("No cffi")
 
@@ -70,7 +72,8 @@ class TestCffi(PillowTestCase):
         self._test_get_access(hopper('LA'))
         self._test_get_access(hopper('1'))
         self._test_get_access(hopper('P'))
-        # self._test_get_access(hopper('PA')) # PA   -- how do I make a PA image?
+        # PA   -- how do I make a PA image?
+        # self._test_get_access(hopper('PA'))
         self._test_get_access(hopper('F'))
 
         im = Image.new('I;16', (10, 10), 40000)

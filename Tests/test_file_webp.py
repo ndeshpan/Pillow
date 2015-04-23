@@ -14,6 +14,7 @@ class TestFileWebp(PillowTestCase):
     def setUp(self):
         try:
             from PIL import _webp
+            assert _webp  # silence warnings
         except ImportError:
             self.skipTest('WebP support not installed')
 

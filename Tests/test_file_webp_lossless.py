@@ -1,12 +1,5 @@
 from helper import unittest, PillowTestCase, hopper
-
 from PIL import Image
-
-try:
-    from PIL import _webp
-except:
-    pass
-    # Skip in setUp()
 
 
 class TestFileWebpLossless(PillowTestCase):

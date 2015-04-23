@@ -3,7 +3,6 @@ from helper import unittest, PillowTestCase, hopper
 from PIL import Image
 
 try:
-    import site
     import numpy
 except ImportError:
     # Skip via setUp()
@@ -14,8 +13,8 @@ class TestNumpy(PillowTestCase):
 
     def setUp(self):
         try:
-            import site
             import numpy
+            assert numpy  # silence warnings
         except ImportError:
             self.skipTest("ImportError")
 
@@ -129,8 +128,8 @@ class TestNumpy(PillowTestCase):
         arr = numpy.zeros((15000,), numpy.float32)
         im.putdata(arr)
 
-        self.assertEqual(len(im.getdata()),len(arr))
-   
+        self.assertEqual(len(im.getdata()), len(arr))
+
 
 if __name__ == '__main__':
     unittest.main()
