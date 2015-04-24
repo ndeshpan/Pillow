@@ -1,4 +1,5 @@
 from helper import unittest, PillowTestCase, hopper
+from PIL import Image
 from io import BytesIO
 import sys
 
@@ -73,7 +74,6 @@ post-patch:
 
 """
 
-
     def test_qtables_leak(self):
         im = hopper('RGB')
 
@@ -101,7 +101,6 @@ post-patch:
 
         qtables = [standard_l_qtable,
                    standard_chrominance_qtable]
-
 
         for count in range(iterations):
             test_output = BytesIO()
@@ -170,7 +169,6 @@ post patch:
         for count in range(iterations):
             test_output = BytesIO()
             im.save(test_output, "JPEG", exif=exif)
-
 
     """
 base case:
