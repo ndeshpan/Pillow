@@ -21,7 +21,7 @@ class TestJpegLeaks(PillowTestCase):
         from resource import setrlimit, RLIMIT_AS, RLIMIT_STACK
         setrlimit(RLIMIT_STACK, (stack_size, stack_size))
         setrlimit(RLIMIT_AS, (mem_limit, mem_limit))
-        for count in range(iterations):
+        for _ in range(iterations):
             with Image.open(test_file) as im:
                 im.load()
 
@@ -29,7 +29,7 @@ class TestJpegLeaks(PillowTestCase):
         from resource import setrlimit, RLIMIT_AS, RLIMIT_STACK
         setrlimit(RLIMIT_STACK, (stack_size, stack_size))
         setrlimit(RLIMIT_AS, (mem_limit, mem_limit))
-        for count in range(iterations):
+        for _ in range(iterations):
             with Image.open(test_file) as im:
                 im.load()
                 test_output = BytesIO()
