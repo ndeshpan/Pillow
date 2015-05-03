@@ -121,13 +121,13 @@ class TestFileTiff(PillowTestCase):
         im2 = Image.open('Tests/images/12in16bit.tif')
 
         if Image.DEBUG:
-            print (im.getpixel((0, 0)))
-            print (im.getpixel((0, 1)))
-            print (im.getpixel((0, 2)))
+            print(im.getpixel((0, 0)))
+            print(im.getpixel((0, 1)))
+            print(im.getpixel((0, 2)))
 
-            print (im2.getpixel((0, 0)))
-            print (im2.getpixel((0, 1)))
-            print (im2.getpixel((0, 2)))
+            print(im2.getpixel((0, 0)))
+            print(im2.getpixel((0, 1)))
+            print(im2.getpixel((0, 2)))
 
         self.assert_image_equal(im, im2)
 
@@ -176,12 +176,23 @@ class TestFileTiff(PillowTestCase):
 
         # Assert
         self.assertIsInstance(ret, str)
+
+    def test_as_dict(self):
+        # Arrange
+        filename = "Tests/images/pil136.tiff"
+        im = Image.open(filename)
+
+        # Act
+        ret = im.ifd.as_dict()
+
+        # Assert
+        self.assertIsInstance(ret, dict)
+
         self.assertEqual(
-            ret,
-            '{256: (55,), 257: (43,), 258: (8, 8, 8, 8), 259: (1,), '
-            '262: (2,), 296: (2,), 273: (8,), 338: (1,), 277: (4,), '
-            '279: (9460,), 282: ((720000, 10000),), '
-            '283: ((720000, 10000),), 284: (1,)}')
+            ret, {256: (55,), 257: (43,), 258: (8, 8, 8, 8), 259: (1,),
+                  262: (2,), 296: (2,), 273: (8,), 338: (1,), 277: (4,),
+                  279: (9460,), 282: ((720000, 10000),),
+                  283: ((720000, 10000),), 284: (1,)})
 
     def test__delitem__(self):
         # Arrange
@@ -306,7 +317,6 @@ class TestFileTiff(PillowTestCase):
         self.assertEqual(im.mode, "L")
         self.assert_image_similar(im, original, 7.3)
 
-
     def test_page_number_x_0(self):
         # Issue 973
         # Test TIFF with tag 297 (Page Number) having value of 0 0.
@@ -326,7 +336,40 @@ class TestFileTiff(PillowTestCase):
         # Should not divide by zero
         im.save(outfile)
 
-        
+    def test_with_underscores(self):
+        # Arrange: use underscores
+        kwargs = {'resolution_unit': 'inch',
+                  'x_resolution': 72,
+                  'y_resolution': 36}
+        filename = self.tempfile("temp.tif")
+
+        # Act
+        hopper("RGB").save(filename, **kwargs)
+
+        # Assert
+        from PIL.TiffImagePlugin import X_RESOLUTION, Y_RESOLUTION
+        im = Image.open(filename)
+        self.assertEqual(im.tag.tags[X_RESOLUTION][0][0], 72)
+        self.assertEqual(im.tag.tags[Y_RESOLUTION][0][0], 36)
+
+    def test_deprecation_warning_with_spaces(self):
+        # Arrange: use spaces
+        kwargs = {'resolution unit': 'inch',
+                  'x resolution': 36,
+                  'y resolution': 72}
+        filename = self.tempfile("temp.tif")
+
+        # Act
+        self.assert_warning(DeprecationWarning,
+                            lambda: hopper("RGB").save(filename, **kwargs))
+
+        # Assert
+        from PIL.TiffImagePlugin import X_RESOLUTION, Y_RESOLUTION
+        im = Image.open(filename)
+        self.assertEqual(im.tag.tags[X_RESOLUTION][0][0], 36)
+        self.assertEqual(im.tag.tags[Y_RESOLUTION][0][0], 72)
+
+
 if __name__ == '__main__':
     unittest.main()
 

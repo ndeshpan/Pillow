@@ -72,6 +72,20 @@ _MODES = {
 
 _simple_palette = re.compile(b'^\xff+\x00\xff*$')
 
+# Maximum decompressed size for a iTXt or zTXt chunk.
+# Eliminates decompression bombs where compressed chunks can expand 1000x
+MAX_TEXT_CHUNK = ImageFile.SAFEBLOCK
+# Set the maximum total text chunk size.
+MAX_TEXT_MEMORY = 64 * MAX_TEXT_CHUNK
+
+
+def _safe_zlib_decompress(s):
+    dobj = zlib.decompressobj()
+    plaintext = dobj.decompress(s, MAX_TEXT_CHUNK)
+    if dobj.unconsumed_tail:
+        raise ValueError("Decompressed Data Too Large")
+    return plaintext
+
 
 # --------------------------------------------------------------------
 # Support classes.  Suitable for PNG and related formats like MNG etc.
@@ -162,7 +176,7 @@ class iTXt(str):
         :param lang: language code
         :param tkey: UTF-8 version of the key name
         """
-        
+
         self = str.__new__(cls, text)
         self.lang = lang
         self.tkey = tkey
@@ -185,7 +199,7 @@ class PngInfo:
         :param data: a byte string of the encoded data
 
         """
-        
+
         self.chunks.append((cid, data))
 
     def add_itxt(self, key, value, lang="", tkey="", zip=False):
@@ -198,7 +212,7 @@ class PngInfo:
         :param zip: compression flag
 
         """
-        
+
         if not isinstance(key, bytes):
             key = key.encode("latin-1", "strict")
         if not isinstance(value, bytes):
@@ -222,7 +236,7 @@ class PngInfo:
         :param value: value for this key, text or an
            :py:class:`PIL.PngImagePlugin.iTXt` instance
         :param zip: compression flag
-        
+
         """
         if isinstance(value, iTXt):
             return self.add_itxt(key, value, value.lang, value.tkey, bool(zip))
@@ -260,6 +274,14 @@ class PngStream(ChunkStream):
         self.im_tile = None
         self.im_palette = None
 
+        self.text_memory = 0
+
+    def check_text_memory(self, chunklen):
+        self.text_memory += chunklen
+        if self.text_memory > MAX_TEXT_MEMORY:
+            raise ValueError("Too much memory used in text chunks: %s>MAX_TEXT_MEMORY" %
+                             self.text_memory)
+
     def chunk_iCCP(self, pos, length):
 
         # ICC profile
@@ -278,7 +300,7 @@ class PngStream(ChunkStream):
             raise SyntaxError("Unknown compression method %s in iCCP chunk" %
                               comp_method)
         try:
-            icc_profile = zlib.decompress(s[i+2:])
+            icc_profile = _safe_zlib_decompress(s[i+2:])
         except zlib.error:
             icc_profile = None  # FIXME
         self.im_info["icc_profile"] = icc_profile
@@ -372,6 +394,8 @@ class PngStream(ChunkStream):
                 v = v.decode('latin-1', 'replace')
 
             self.im_info[k] = self.im_text[k] = v
+            self.check_text_memory(len(v))
+
         return s
 
     def chunk_zTXt(self, pos, length):
@@ -391,7 +415,7 @@ class PngStream(ChunkStream):
             raise SyntaxError("Unknown compression method %s in zTXt chunk" %
                               comp_method)
         try:
-            v = zlib.decompress(v[1:])
+            v = _safe_zlib_decompress(v[1:])
         except zlib.error:
             v = b""
 
@@ -401,6 +425,8 @@ class PngStream(ChunkStream):
                 v = v.decode('latin-1', 'replace')
 
             self.im_info[k] = self.im_text[k] = v
+            self.check_text_memory(len(v))
+
         return s
 
     def chunk_iTXt(self, pos, length):
@@ -421,7 +447,7 @@ class PngStream(ChunkStream):
         if cf != 0:
             if cm == 0:
                 try:
-                    v = zlib.decompress(v)
+                    v = _safe_zlib_decompress(v)
                 except zlib.error:
                     return s
             else:
@@ -436,6 +462,7 @@ class PngStream(ChunkStream):
                 return s
 
         self.im_info[k] = self.im_text[k] = iTXt(v, lang, tk)
+        self.check_text_memory(len(v))
 
         return s
 
@@ -702,10 +729,6 @@ def _save(im, fp, filename, chunk=putchunk, check=0):
             alpha = im.im.getpalette("RGBA", "A")
             alpha_bytes = 2**bits
             chunk(fp, b"tRNS", alpha[:alpha_bytes])
-
-    if 0:
-        # FIXME: to be supported some day
-        chunk(fp, b"gAMA", o32(int(gamma * 100000.0)))
 
     dpi = im.encoderinfo.get("dpi")
     if dpi:

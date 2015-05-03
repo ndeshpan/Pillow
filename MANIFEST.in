@@ -2,12 +2,14 @@ include *.c
 include *.h
 include *.md
 include *.py
+include *.sh
 include *.rst
 include *.txt
 include *.yaml
 include .coveragerc
 include .gitattributes
 include .travis.yml
+include LICENSE
 include Makefile
 include tox.ini
 recursive-include PIL *.md

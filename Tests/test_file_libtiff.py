@@ -27,7 +27,7 @@ class LibTiffTestCase(PillowTestCase):
             self.assertEqual(im._compression, 'group4')
         except:
             print("No _compression")
-            print (dir(im))
+            print(dir(im))
 
         # can we write it back out, in a different form.
         out = self.tempfile("temp.png")
@@ -39,22 +39,22 @@ class TestFileLibTiff(LibTiffTestCase):
     def test_g4_tiff(self):
         """Test the ordinary file path load path"""
 
-        file = "Tests/images/hopper_g4_500.tif"
-        im = Image.open(file)
+        test_file = "Tests/images/hopper_g4_500.tif"
+        im = Image.open(test_file)
 
         self.assertEqual(im.size, (500, 500))
         self._assert_noerr(im)
 
     def test_g4_large(self):
-        file = "Tests/images/pport_g4.tif"
-        im = Image.open(file)
+        test_file = "Tests/images/pport_g4.tif"
+        im = Image.open(test_file)
         self._assert_noerr(im)
 
     def test_g4_tiff_file(self):
         """Testing the string load path"""
 
-        file = "Tests/images/hopper_g4_500.tif"
-        with open(file, 'rb') as f:
+        test_file = "Tests/images/hopper_g4_500.tif"
+        with open(test_file, 'rb') as f:
             im = Image.open(f)
 
             self.assertEqual(im.size, (500, 500))
@@ -62,9 +62,9 @@ class TestFileLibTiff(LibTiffTestCase):
 
     def test_g4_tiff_bytesio(self):
         """Testing the stringio loading code path"""
-        file = "Tests/images/hopper_g4_500.tif"
+        test_file = "Tests/images/hopper_g4_500.tif"
         s = io.BytesIO()
-        with open(file, 'rb') as f:
+        with open(test_file, 'rb') as f:
             s.write(f.read())
             s.seek(0)
         im = Image.open(s)
@@ -89,8 +89,8 @@ class TestFileLibTiff(LibTiffTestCase):
 
     def test_g4_write(self):
         """Checking to see that the saved image is the same as what we wrote"""
-        file = "Tests/images/hopper_g4_500.tif"
-        orig = Image.open(file)
+        test_file = "Tests/images/hopper_g4_500.tif"
+        orig = Image.open(test_file)
 
         out = self.tempfile("temp.tif")
         rot = orig.transpose(Image.ROTATE_90)
@@ -108,8 +108,8 @@ class TestFileLibTiff(LibTiffTestCase):
         self.assertNotEqual(orig.tobytes(), reread.tobytes())
 
     def test_adobe_deflate_tiff(self):
-        file = "Tests/images/tiff_adobe_deflate.tif"
-        im = Image.open(file)
+        test_file = "Tests/images/tiff_adobe_deflate.tif"
+        im = Image.open(test_file)
 
         self.assertEqual(im.mode, "RGB")
         self.assertEqual(im.size, (278, 374))
@@ -215,8 +215,8 @@ class TestFileLibTiff(LibTiffTestCase):
 
     def test_g4_string_info(self):
         """Tests String data in info directory"""
-        file = "Tests/images/hopper_g4_500.tif"
-        orig = Image.open(file)
+        test_file = "Tests/images/hopper_g4_500.tif"
+        orig = Image.open(test_file)
 
         out = self.tempfile("temp.tif")
 
@@ -243,13 +243,13 @@ class TestFileLibTiff(LibTiffTestCase):
         im2 = Image.open('Tests/images/12in16bit.tif')
 
         if Image.DEBUG:
-            print (im.getpixel((0, 0)))
-            print (im.getpixel((0, 1)))
-            print (im.getpixel((0, 2)))
+            print(im.getpixel((0, 0)))
+            print(im.getpixel((0, 1)))
+            print(im.getpixel((0, 2)))
 
-            print (im2.getpixel((0, 0)))
-            print (im2.getpixel((0, 1)))
-            print (im2.getpixel((0, 2)))
+            print(im2.getpixel((0, 0)))
+            print(im2.getpixel((0, 1)))
+            print(im2.getpixel((0, 2)))
 
         self.assert_image_equal(im, im2)
 

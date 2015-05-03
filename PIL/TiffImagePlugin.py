@@ -506,7 +506,7 @@ class ImageFileDirectory(collections.MutableMapping):
                 typ = self.tagtype[tag]
 
             if Image.DEBUG:
-                print ("Tag %s, Type: %s, Value: %s" % (tag, typ, value))
+                print("Tag %s, Type: %s, Value: %s" % (tag, typ, value))
 
             if typ == 1:
                 # byte data
@@ -517,6 +517,15 @@ class ImageFileDirectory(collections.MutableMapping):
             elif typ == 7:
                 # untyped data
                 data = value = b"".join(value)
+            elif typ in (11, 12):
+                # float value
+                tmap = {11: 'f', 12: 'd'}
+                if not isinstance(value, tuple):
+                    value = (value,)
+                a = array.array(tmap[typ], value)
+                if self.prefix != native_prefix:
+                    a.byteswap()
+                data = a.tostring()
             elif isStringType(value[0]):
                 # string data
                 if isinstance(value, tuple):
@@ -629,9 +638,9 @@ class TiffImageFile(ImageFile.ImageFile):
         self.__fp = self.fp
 
         if Image.DEBUG:
-            print ("*** TiffImageFile._open ***")
-            print ("- __first:", self.__first)
-            print ("- ifh: ", ifh)
+            print("*** TiffImageFile._open ***")
+            print("- __first:", self.__first)
+            print("- ifh: ", ifh)
 
         # and load the first frame
         self._seek(0)
@@ -722,8 +731,8 @@ class TiffImageFile(ImageFile.ImageFile):
 
         # (self._compression, (extents tuple),
         #   0, (rawmode, self._compression, fp))
-        ignored, extents, ignored_2, args = self.tile[0]
-        args = args + (self.ifd.offset,)
+        extents = self.tile[0][1]
+        args = self.tile[0][3] + (self.ifd.offset,)
         decoder = Image._getdecoder(self.mode, 'libtiff', args,
                                     self.decoderconfig)
         try:
@@ -742,19 +751,19 @@ class TiffImageFile(ImageFile.ImageFile):
             # that returns an IOError if there's no underlying fp. Easier to
             # dea. with here by reordering.
             if Image.DEBUG:
-                print ("have getvalue. just sending in a string from getvalue")
+                print("have getvalue. just sending in a string from getvalue")
             n, err = decoder.decode(self.fp.getvalue())
         elif hasattr(self.fp, "fileno"):
             # we've got a actual file on disk, pass in the fp.
             if Image.DEBUG:
-                print ("have fileno, calling fileno version of the decoder.")
+                print("have fileno, calling fileno version of the decoder.")
             self.fp.seek(0)
             # 4 bytes, otherwise the trace might error out
             n, err = decoder.decode(b"fpfp")
         else:
             # we have something else.
             if Image.DEBUG:
-                print ("don't have fileno or getvalue. just reading")
+                print("don't have fileno or getvalue. just reading")
             # UNDONE -- so much for that buffer size thing.
             n, err = decoder.decode(self.fp.read())
 
@@ -934,7 +943,7 @@ class TiffImageFile(ImageFile.ImageFile):
                             (0, min(y, ysize), w, min(y+h, ysize)),
                             offsets[i], a))
                     if Image.DEBUG:
-                        print ("tiles: ", self.tile)
+                        print("tiles: ", self.tile)
                     y = y + h
                     if y >= self.size[1]:
                         x = y = 0
@@ -969,7 +978,7 @@ class TiffImageFile(ImageFile.ImageFile):
         # fixup palette descriptor
 
         if self.mode == "P":
-            palette = [o8(a // 256) for a in self.tag[COLORMAP]]
+            palette = [o8(b // 256) for b in self.tag[COLORMAP]]
             self.palette = ImagePalette.raw("RGB;L", b"".join(palette))
 #
 # --------------------------------------------------------------------
@@ -1068,31 +1077,25 @@ def _save(im, fp, filename):
         if "icc_profile" in im.info:
             ifd[ICCPROFILE] = im.info["icc_profile"]
 
-    if "description" in im.encoderinfo:
-        ifd[IMAGEDESCRIPTION] = im.encoderinfo["description"]
-    if "resolution" in im.encoderinfo:
-        ifd[X_RESOLUTION] = ifd[Y_RESOLUTION] \
-            = _cvt_res(im.encoderinfo["resolution"])
-    if "x resolution" in im.encoderinfo:
-        ifd[X_RESOLUTION] = _cvt_res(im.encoderinfo["x resolution"])
-    if "y resolution" in im.encoderinfo:
-        ifd[Y_RESOLUTION] = _cvt_res(im.encoderinfo["y resolution"])
-    if "resolution unit" in im.encoderinfo:
-        unit = im.encoderinfo["resolution unit"]
-        if unit == "inch":
-            ifd[RESOLUTION_UNIT] = 2
-        elif unit == "cm" or unit == "centimeter":
-            ifd[RESOLUTION_UNIT] = 3
-        else:
-            ifd[RESOLUTION_UNIT] = 1
-    if "software" in im.encoderinfo:
-        ifd[SOFTWARE] = im.encoderinfo["software"]
-    if "date time" in im.encoderinfo:
-        ifd[DATE_TIME] = im.encoderinfo["date time"]
-    if "artist" in im.encoderinfo:
-        ifd[ARTIST] = im.encoderinfo["artist"]
-    if "copyright" in im.encoderinfo:
-        ifd[COPYRIGHT] = im.encoderinfo["copyright"]
+    for key, name, cvt in [
+            (IMAGEDESCRIPTION, "description", lambda x: x),
+            (X_RESOLUTION, "resolution", _cvt_res),
+            (Y_RESOLUTION, "resolution", _cvt_res),
+            (X_RESOLUTION, "x_resolution", _cvt_res),
+            (Y_RESOLUTION, "y_resolution", _cvt_res),
+            (RESOLUTION_UNIT, "resolution_unit",
+             lambda x: {"inch": 2, "cm": 3, "centimeter": 3}.get(x, 1)),
+            (SOFTWARE, "software", lambda x: x),
+            (DATE_TIME, "date_time", lambda x: x),
+            (ARTIST, "artist", lambda x: x),
+            (COPYRIGHT, "copyright", lambda x: x)]:
+        name_with_spaces = name.replace("_", " ")
+        if "_" in name and name_with_spaces in im.encoderinfo:
+            warnings.warn("%r is deprecated; use %r instead" %
+                          (name_with_spaces, name), DeprecationWarning)
+            ifd[key] = cvt(im.encoderinfo[name.replace("_", " ")])
+        if name in im.encoderinfo:
+            ifd[key] = cvt(im.encoderinfo[name])
 
     dpi = im.encoderinfo.get("dpi")
     if dpi:
@@ -1125,8 +1128,8 @@ def _save(im, fp, filename):
 
     if libtiff:
         if Image.DEBUG:
-            print ("Saving using libtiff encoder")
-            print (ifd.items())
+            print("Saving using libtiff encoder")
+            print(ifd.items())
         _fp = 0
         if hasattr(fp, "fileno"):
             try:
@@ -1183,7 +1186,7 @@ def _save(im, fp, filename):
                     atts[k] = v
 
         if Image.DEBUG:
-            print (atts)
+            print(atts)
 
         # libtiff always expects the bytes in native order.
         # we're storing image byte order. So, if the rawmode

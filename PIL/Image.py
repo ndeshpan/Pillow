@@ -59,7 +59,7 @@ try:
     # Note that other modules should not refer to _imaging directly;
     # import Image and use the Image.core variable instead.
     # Also note that Image.core is not a publicly documented interface,
-    # and should be considered private and subject to change. 
+    # and should be considered private and subject to change.
     from PIL import _imaging as core
     if PILLOW_VERSION != getattr(core, 'PILLOW_VERSION', None):
         raise ImportError("The _imaging extension was built for another "
@@ -109,6 +109,8 @@ from PIL._util import deferred_error
 
 import os
 import sys
+import io
+import struct
 
 # type stuff
 import collections
@@ -385,7 +387,7 @@ def init():
     for plugin in _plugins:
         try:
             if DEBUG:
-                print ("Importing %s" % plugin)
+                print("Importing %s" % plugin)
             __import__("PIL.%s" % plugin, globals(), locals(), [])
         except ImportError:
             if DEBUG:
@@ -544,7 +546,7 @@ class Image:
             self.fp.close()
         except Exception as msg:
             if DEBUG:
-                print ("Error closing: %s" % msg)
+                print("Error closing: %s" % msg)
 
         # Instead of simply setting to None, we're setting up a
         # deferred error that will better explain that the core image
@@ -598,6 +600,16 @@ class Image:
             id(self)
             )
 
+    def _repr_png_(self):
+        """ iPython display hook support
+
+        :returns: png version of the image as bytes
+        """
+        from io import BytesIO
+        b = BytesIO()
+        self.save(b, 'PNG')
+        return b.getvalue()
+
     def __getattr__(self, name):
         if name == "__array_interface__":
             # numpy array interface support
@@ -625,7 +637,7 @@ class Image:
         self.mode = mode
         self.size = size
         self.im = core.new(mode, size)
-        if mode in ("L", "P"):
+        if mode in ("L", "P") and palette:
             self.putpalette(palette)
         self.frombytes(data)
 
@@ -744,7 +756,7 @@ class Image:
         associated with the image.
 
         :returns: An image access object.
-        :rtype: :ref:`PixelAccess` or :py:class:`PIL.PyAccess` 
+        :rtype: :ref:`PixelAccess` or :py:class:`PIL.PyAccess`
         """
         if self.im and self.palette and self.palette.dirty:
             # realize palette
@@ -882,11 +894,10 @@ class Image:
                 if isinstance(t, bytes):
                     self.im.putpalettealphas(t)
                 elif isinstance(t, int):
-                    self.im.putpalettealpha(t,0)
+                    self.im.putpalettealpha(t, 0)
                 else:
                     raise ValueError("Transparency for P mode should" +
                                      " be bytes or int")
-
 
         if mode == "P" and palette == ADAPTIVE:
             im = self.im.quantize(colors)
@@ -942,14 +953,14 @@ class Image:
         """
         Convert the image to 'P' mode with the specified number
         of colors.
-        
+
         :param colors: The desired number of colors, <= 256
         :param method: 0 = median cut
                        1 = maximum coverage
                        2 = fast octree
         :param kmeans: Integer
         :param palette: Quantize to the :py:class:`PIL.ImagingPalette` palette.
-        :returns: A new image                        
+        :returns: A new image
 
         """
 
@@ -1535,7 +1546,7 @@ class Image:
 
         self.load()
 
-        size=tuple(size)
+        size = tuple(size)
         if self.size == size:
             return self._new(self.im)
 
@@ -1752,7 +1763,7 @@ class Image:
         """
         return 0
 
-    def thumbnail(self, size, resample=LANCZOS):
+    def thumbnail(self, size, resample=BICUBIC):
         """
         Make this image into a thumbnail.  This method modifies the
         image to contain a thumbnail version of itself, no larger than
@@ -1770,7 +1781,7 @@ class Image:
         :param resample: Optional resampling filter.  This can be one
            of :py:attr:`PIL.Image.NEAREST`, :py:attr:`PIL.Image.BILINEAR`,
            :py:attr:`PIL.Image.BICUBIC`, or :py:attr:`PIL.Image.LANCZOS`.
-           If omitted, it defaults to :py:attr:`PIL.Image.LANCZOS`.
+           If omitted, it defaults to :py:attr:`PIL.Image.BICUBIC`.
            (was :py:attr:`PIL.Image.NEAREST` prior to version 2.5.0)
         :returns: None
         """
@@ -2024,7 +2035,7 @@ def frombytes(mode, size, data, decoder_name="raw", *args):
 
     You can also use any pixel decoder supported by PIL.  For more
     information on available decoders, see the section
-    **Writing Your Own File Decoder**.
+    :ref:`Writing Your Own File Decoder <file-decoders>`.
 
     Note that this function decodes pixel data only, not entire images.
     If you have an entire image in a string, wrap it in a
@@ -2238,6 +2249,11 @@ def open(fp, mode="r"):
     else:
         filename = ""
 
+    try:
+        fp.seek(0)
+    except (AttributeError, io.UnsupportedOperation):
+        fp = io.BytesIO(fp.read())
+
     prefix = fp.read(16)
 
     preinit()
@@ -2250,7 +2266,7 @@ def open(fp, mode="r"):
                 im = factory(fp, filename)
                 _decompression_bomb_check(im.size)
                 return im
-        except (SyntaxError, IndexError, TypeError):
+        except (SyntaxError, IndexError, TypeError, struct.error):
             # import traceback
             # traceback.print_exc()
             pass
@@ -2265,7 +2281,7 @@ def open(fp, mode="r"):
                     im = factory(fp, filename)
                     _decompression_bomb_check(im.size)
                     return im
-            except (SyntaxError, IndexError, TypeError):
+            except (SyntaxError, IndexError, TypeError, struct.error):
                 # import traceback
                 # traceback.print_exc()
                 pass
