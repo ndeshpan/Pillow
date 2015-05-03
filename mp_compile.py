@@ -4,12 +4,13 @@
 from multiprocessing import Pool, cpu_count
 from distutils.ccompiler import CCompiler
 import os
+import sys
 
 try:
-    MAX_PROCS = int(os.environ.get('MAX_CONCURRENCY', cpu_count()))
-except:
+    MAX_PROCS = int(os.environ.get('MAX_CONCURRENCY', min(4, cpu_count())))
+except NotImplementedError:
     MAX_PROCS = None
-        
+
 
 # hideous monkeypatching.  but. but. but.
 def _mp_compile_one(tp):
@@ -38,7 +39,7 @@ def _mp_compile(self, sources, output_dir=None, macros=None,
 
     pool = Pool(MAX_PROCS)
     try:
-        print ("Building using %d processes" % pool._processes)
+        print("Building using %d processes" % pool._processes)
     except:
         pass
     arr = [(self, obj, build, cc_args, extra_postargs, pp_opts)
@@ -50,13 +51,14 @@ def _mp_compile(self, sources, output_dir=None, macros=None,
     return objects
 
 # explicitly don't enable if environment says 1 processor
-if MAX_PROCS != 1:
+if MAX_PROCS != 1 and not sys.platform.startswith('win'):
     try:
         # bug, only enable if we can make a Pool. see issue #790 and
         # http://stackoverflow.com/questions/6033599/oserror-38-errno-38-with-multiprocessing
         pool = Pool(2)
         CCompiler.compile = _mp_compile
     except Exception as msg:
-        print("Exception installing mp_compile, proceeding without: %s" %msg)
+        print("Exception installing mp_compile, proceeding without: %s" % msg)
 else:
-    print("Single threaded build, not installing mp_compile: %s processes" %MAX_PROCS)
+    print("Single threaded build, not installing mp_compile: %s processes" %
+          MAX_PROCS)
