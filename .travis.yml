@@ -19,7 +19,7 @@ python:
 install:
   - "travis_retry sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev libjpeg-turbo-progs cmake imagemagick"
   - "travis_retry pip install cffi"
-  - "travis_retry pip install coverage nose"
+  - travis_retry pip install "coverage>4.0a" nose
 
     # Pyroma installation is slow on Py3, so just do it for Py2.
   - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then travis_retry pip install pyroma; fi
@@ -38,7 +38,8 @@ script:
   - CFLAGS="-coverage" python setup.py build_ext --inplace
 
   - coverage run --append --include=PIL/* selftest.py
-  - coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py --processes=-1 --process-timeout=600
+  - coverage run --append --parallel-mode --include=PIL/* -m nose -vx Tests/test_*.py --processes=-1 --process-timeout=600
+  - coverage combine
 
 after_success:
    # gather the coverage data
