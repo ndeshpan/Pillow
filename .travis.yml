@@ -19,7 +19,8 @@ python:
 install:
   - "travis_retry sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev libjpeg-turbo-progs cmake imagemagick"
   - "travis_retry pip install cffi"
-  - "travis_retry pip install coverage nose nose-timer"
+  - "travis_retry pip install coverage nose"
+  - "travis_retry pip install git+git://github.com/mahmoudimus/nose-timer.git"
 
     # Pyroma installation is slow on Py3, so just do it for Py2.
   - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then travis_retry pip install pyroma; fi
