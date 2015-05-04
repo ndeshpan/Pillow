@@ -40,6 +40,7 @@ script:
   - coverage run --append --include=PIL/* selftest.py
   - coverage run --append --parallel-mode --include=PIL/* -m nose -vx Tests/test_*.py --processes=-1 --process-timeout=600
   - coverage combine
+  - coverage report
 
 after_success:
    # gather the coverage data
