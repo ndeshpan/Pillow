@@ -36,7 +36,7 @@ script:
   - CFLAGS="-coverage" python setup.py build_ext --inplace
 
   - coverage run --append --include=PIL/* selftest.py
-  - nosetest -vx Tests/test_*.py --with-timer --timer-top-n 10
+  - nosetests -vx Tests/test_*.py --with-timer --timer-top-n 10
 
 after_success:
    # gather the coverage data
