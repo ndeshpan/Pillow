@@ -1,8 +1,5 @@
 language: python
 
-notifications:
-  irc: "chat.freenode.net#pil"
-
 # Run slow PyPy* first, to give them a headstart and reduce waiting time.
 # Run latest 3.x and 2.x next, to get quick compatibility results.
 # Then run the remainder.
@@ -39,7 +36,7 @@ script:
   - CFLAGS="-coverage" python setup.py build_ext --inplace
 
   - coverage run --append --include=PIL/* selftest.py
-  - coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py --with-timer --timer-top-n 10
+  - nose -vx Tests/test_*.py --with-timer --timer-top-n 10
 
 after_success:
    # gather the coverage data
