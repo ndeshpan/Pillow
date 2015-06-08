@@ -50,7 +50,7 @@ from PIL.GifImagePlugin import getheader, getdata
 # sequence iterator
 
 
-class image_sequence:
+class image_sequence(object):
     def __init__(self, im):
         self.im = im
 
@@ -75,8 +75,8 @@ def makedelta(fp, sequence):
 
     for im in sequence:
 
-        #
-        # FIXME: write graphics control block before each frame
+        # To specify duration, add the time in milliseconds to getdata(),
+        # e.g. getdata(im, duration=1000)
 
         if not previous:
 

@@ -71,6 +71,7 @@ _MODES = {
 
 
 _simple_palette = re.compile(b'^\xff+\x00\xff*$')
+_null_palette = re.compile(b'^\x00*$')
 
 # Maximum decompressed size for a iTXt or zTXt chunk.
 # Eliminates decompression bombs where compressed chunks can expand 1000x
@@ -90,7 +91,7 @@ def _safe_zlib_decompress(s):
 # --------------------------------------------------------------------
 # Support classes.  Suitable for PNG and related formats like MNG etc.
 
-class ChunkStream:
+class ChunkStream(object):
 
     def __init__(self, fp):
 
@@ -183,7 +184,7 @@ class iTXt(str):
         return self
 
 
-class PngInfo:
+class PngInfo(object):
     """
     PNG chunk container (for use with save(pnginfo=))
 
@@ -350,6 +351,8 @@ class PngStream(ChunkStream):
                 i = s.find(b"\0")
                 if i >= 0:
                     self.im_info["transparency"] = i
+            elif _null_palette.match(s):
+                self.im_info["transparency"] = 0
             else:
                 self.im_info["transparency"] = s
         elif self.im_mode == "L":
@@ -620,7 +623,7 @@ def putchunk(fp, cid, *data):
     fp.write(o16(hi) + o16(lo))
 
 
-class _idat:
+class _idat(object):
     # wrap output from the encoder in IDAT chunks
 
     def __init__(self, fp, chunk):
@@ -771,7 +774,7 @@ def _save(im, fp, filename, chunk=putchunk, check=0):
 def getchunks(im, **params):
     """Return a list of PNG chunks representing this image."""
 
-    class collector:
+    class collector(object):
         data = []
 
         def write(self, data):

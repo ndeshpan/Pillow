@@ -4,6 +4,33 @@ Changelog (Pillow)
 2.9.0 (Unreleased)
 ------------------
 
+- Provide n_frames attribute to multi-frame formats #1261
+  [anntzer, radarhere]
+
+- Add duration and loop set to GifImagePlugin #1172
+  [radarhere]
+
+- Ico files are little endian #1232
+  [wiredfool]
+
+- Upgrade olefile from 0.30 to 0.42b #1226
+  [radarhere, decalage2]
+
+- Setting transparency value to 0 when the tRNS contains only null byte(s) #1239
+  [juztin]
+ 
+- Separated out feature checking from selftest #1233
+  [radarhere]
+
+- Style/health fixes
+  [radarhere]
+
+- Update WebP from 0.4.1 to 0.4.3 #1235
+  [radarhere]
+
+- Release GIL during image load (decode) #1224
+  [lkesteloot]
+
 - Added icns save #1185
   [radarhere]
 
@@ -15,6 +42,12 @@ Changelog (Pillow)
 
 - Tiff: allow writing floating point tag values #1113
   [bpedersen2]
+
+2.8.2 (2015-06-06)
+------------------
+
+- Bug fix: Fixed Tiff handling of bad EXIF data
+  [radarhere]
 
 2.8.1 (2015-04-02)
 ------------------

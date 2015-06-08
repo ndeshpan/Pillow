@@ -4,7 +4,7 @@
 #
 # JPEG (JFIF) file handling
 #
-# See "Digital Compression and Coding of Continous-Tone Still Images,
+# See "Digital Compression and Coding of Continuous-Tone Still Images,
 # Part 1, Requirements and Guidelines" (CCITT T.81 / ISO 10918-1)
 #
 # History:
@@ -704,7 +704,7 @@ def _save_cjpeg(im, fp, filename):
     tempfile = im._dump()
     subprocess.check_call(["cjpeg", "-outfile", filename, tempfile])
     try:
-        os.unlink(file)
+        os.unlink(tempfile)
     except:
         pass
 

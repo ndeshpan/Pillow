@@ -35,7 +35,7 @@ class DecompressionBombWarning(RuntimeWarning):
     pass
 
 
-class _imaging_not_installed:
+class _imaging_not_installed(object):
     # module placeholder
     def __getattr__(self, id):
         raise ImportError("The _imaging C module is not installed")
@@ -443,7 +443,7 @@ def coerce_e(value):
     return value if isinstance(value, _E) else _E(value)
 
 
-class _E:
+class _E(object):
     def __init__(self, data):
         self.data = data
 
@@ -478,7 +478,7 @@ def _getscaleoffset(expr):
 # --------------------------------------------------------------------
 # Implementation wrapper
 
-class Image:
+class Image(object):
     """
     This class represents an image object.  To create
     :py:class:`~PIL.Image.Image` objects, use the appropriate factory
@@ -1288,11 +1288,11 @@ class Image:
         images (in the latter case, the alpha band is used as mask).
         Where the mask is 255, the given image is copied as is.  Where
         the mask is 0, the current value is preserved.  Intermediate
-        values can be used for transparency effects.
+        values will mix the two images together, including their alpha
+        channels if they have them.
 
-        Note that if you paste an "RGBA" image, the alpha band is
-        ignored.  You can work around this by using the same image as
-        both source image and mask.
+        See :py:meth:`~PIL.Image.Image.alpha_composite` if you want to
+        combine images with respect to their alpha channels.
 
         :param im: Source image or pixel value (integer or tuple).
         :param box: An optional 4-tuple giving the region to paste into.
@@ -1810,7 +1810,7 @@ class Image:
         self.readonly = 0
         self.pyaccess = None
 
-    # FIXME: the different tranform methods need further explanation
+    # FIXME: the different transform methods need further explanation
     # instead of bloating the method docs, add a separate chapter.
     def transform(self, size, method, data=None, resample=NEAREST, fill=1):
         """
@@ -1975,12 +1975,12 @@ class _ImageCrop(Image):
 # --------------------------------------------------------------------
 # Abstract handlers.
 
-class ImagePointHandler:
+class ImagePointHandler(object):
     # used as a mixin by point transforms (for use with im.point)
     pass
 
 
-class ImageTransformHandler:
+class ImageTransformHandler(object):
     # used as a mixin by geometry transforms (for use with im.transform)
     pass
 
