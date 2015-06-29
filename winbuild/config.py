@@ -2,9 +2,9 @@ import os
 
 SF_MIRROR = 'http://iweb.dl.sourceforge.net'
 
-pythons = {#'26': 7,
+pythons = {'26': 7,
            '27': 7,
-           #'32': 7,
+           '32': 7,
            '33': 7.1,
            '34': 7.1}
 
