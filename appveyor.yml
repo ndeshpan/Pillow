@@ -16,6 +16,7 @@ install:
 - IF [%PYTHON%]==[C:/Python26] msiexec /i python-2.6.6.msi /qn
 - IF [%PYTHON%]==[C:/Python32] appveyor DownloadFile https://www.python.org/ftp/python/3.2.5/python-3.2.5.msi
 - IF [%PYTHON%]==[C:/Python32] msiexec /i python-3.2.5.msi /qn
+- pip install setuptools
 - git clone https://github.com/wiredfool/pillow-depends.git c:\pillow-depends
 - xcopy c:\pillow-depends\*.zip c:\pillow\winbuild\
 - xcopy c:\pillow-depends\*.tar.gz c:\pillow\winbuild\
