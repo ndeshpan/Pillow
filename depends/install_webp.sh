@@ -11,5 +11,8 @@ fi
 rm -r libwebp-0.4.3-linux-x86-32
 tar -xvzf libwebp-0.4.3-linux-x86-32.tar.gz --strip-components=1
 
+mv libwebp-0.4.3-linux-x86-32/* .
+
+
 # popd
 
