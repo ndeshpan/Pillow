@@ -3,7 +3,7 @@
 
 if [ ! -f libwebp-0.4.3.tar.gz ]; then
 #     wget 'http://downloads.webmproject.org/releases/webp/libwebp-0.4.3.tar.gz'
-    'wget http://downloads.webmproject.org/releases/webp/libwebp-0.4.3-linux-x86-32.tar.gz'
+    wget 'http://downloads.webmproject.org/releases/webp/libwebp-0.4.3-linux-x86-32.tar.gz'
 fi
 
 
