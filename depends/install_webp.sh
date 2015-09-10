@@ -9,7 +9,7 @@ if [ ! -f libwebp-0.4.3.tar.gz ]; then
 fi
 
 rm -r libwebp-0.4.3-linux-x86-32
-tar -xvzf libwebp-0.4.3-linux-x86-32.tar.gz  -C ~
+tar -xvzf libwebp-0.4.3-linux-x86-32.tar.gz  -C ~  --strip-components=1
 
 popd
 
