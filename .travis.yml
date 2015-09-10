@@ -1,8 +1,5 @@
 language: python
 
-notifications:
-  irc: "chat.freenode.net#pil"
-
 # Run slow PyPy* first, to give them a headstart and reduce waiting time.
 # Run latest 3.x and 2.x next, to get quick compatibility results.
 # Then run the remainder.
