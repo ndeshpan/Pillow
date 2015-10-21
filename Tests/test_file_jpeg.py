@@ -177,7 +177,7 @@ class TestFileJpeg(PillowTestCase):
         gps_index = 34853
         expected_exif_gps = {
             0: '\x00\x00\x00\x01',
-            2: (4294967295L, 1),
+            2: (4294967295, 1),
             5: '\x01',
             30: 65535,
             29: u'1999:99:99 99:99:99'}
