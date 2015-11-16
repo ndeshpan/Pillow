@@ -71,7 +71,7 @@
  * See the README file for information on usage and redistribution.
  */
 
-#define PILLOW_VERSION "2.9.0.dev0"
+#define PILLOW_VERSION "3.1.0.dev0"
 
 #include "Python.h"
 
@@ -97,9 +97,6 @@
 #define WITH_UNSHARPMASK /* Kevin Cazabon's unsharpmask module */
 
 #define WITH_DEBUG /* extra debugging interfaces */
-
-/* PIL Plus extensions */
-#undef  WITH_CRACKCODE /* pil plus */
 
 #undef    VERBOSE
 
@@ -370,7 +367,7 @@ getlist(PyObject* arg, int* length, const char* wrong_length, int type)
     void* list;
     PyObject* seq;
     PyObject* op;
-    
+
     if (!PySequence_Check(arg)) {
         PyErr_SetString(PyExc_TypeError, must_be_sequence);
         return NULL;
@@ -392,11 +389,11 @@ getlist(PyObject* arg, int* length, const char* wrong_length, int type)
         PyErr_SetString(PyExc_TypeError, must_be_sequence);
         return NULL;
     }
-    
+
     for (i = 0; i < n; i++) {
         op = PySequence_Fast_GET_ITEM(seq, i);
-        // DRY, branch prediction is going to work _really_ well 
-        // on this switch. And 3 fewer loops to copy/paste. 
+        // DRY, branch prediction is going to work _really_ well
+        // on this switch. And 3 fewer loops to copy/paste.
         switch (type) {
         case TYPE_UINT8:
             itemp = PyInt_AsLong(op);
@@ -480,13 +477,31 @@ getink(PyObject* color, Imaging im, char* ink)
     /* fill ink buffer (four bytes) with something that can
        be cast to either UINT8 or INT32 */
 
+    int rIsInt = 1;
+    if (im->type == IMAGING_TYPE_UINT8 ||
+        im->type == IMAGING_TYPE_INT32 ||
+        im->type == IMAGING_TYPE_SPECIAL) {
+#if PY_VERSION_HEX >= 0x03000000
+		if (PyLong_Check(color)) {
+			r = (int) PyLong_AsLong(color);
+#else
+		if (PyInt_Check(color) || PyLong_Check(color)) {
+			if (PyInt_Check(color))
+				r = PyInt_AS_LONG(color);
+			else
+				r = (int) PyLong_AsLong(color);
+#endif
+		}
+		if (r == -1 && PyErr_Occurred())
+		    rIsInt = 0;
+    }
+
     switch (im->type) {
     case IMAGING_TYPE_UINT8:
         /* unsigned integer */
         if (im->bands == 1) {
             /* unsigned integer, single layer */
-            r = PyInt_AsLong(color);
-            if (r == -1 && PyErr_Occurred())
+            if (rIsInt != 1)
                 return NULL;
             ink[0] = CLIP(r);
             ink[1] = ink[2] = ink[3] = 0;
@@ -526,8 +541,7 @@ getink(PyObject* color, Imaging im, char* ink)
         return ink;
     case IMAGING_TYPE_INT32:
         /* signed integer */
-        r = PyInt_AsLong(color);
-        if (r == -1 && PyErr_Occurred())
+        if (rIsInt != 1)
             return NULL;
         *(INT32*) ink = r;
         return ink;
@@ -540,8 +554,7 @@ getink(PyObject* color, Imaging im, char* ink)
         return ink;
     case IMAGING_TYPE_SPECIAL:
         if (strncmp(im->mode, "I;16", 4) == 0) {
-            r = PyInt_AsLong(color);
-            if (r == -1 && PyErr_Occurred())
+            if (rIsInt != 1)
                 return NULL;
             ink[0] = (UINT8) r;
             ink[1] = (UINT8) (r >> 8);
@@ -752,11 +765,12 @@ _convert_matrix(ImagingObject* self, PyObject* args)
     float m[12];
     if (!PyArg_ParseTuple(args, "s(ffff)", &mode, m+0, m+1, m+2, m+3)) {
         PyErr_Clear();
-    if (!PyArg_ParseTuple(args, "s(ffffffffffff)", &mode,
-                  m+0, m+1, m+2, m+3,
-                  m+4, m+5, m+6, m+7,
-                  m+8, m+9, m+10, m+11))
-        return NULL;
+        if (!PyArg_ParseTuple(args, "s(ffffffffffff)", &mode,
+                              m+0, m+1, m+2, m+3,
+                              m+4, m+5, m+6, m+7,
+                              m+8, m+9, m+10, m+11)){
+            return NULL;
+        }
     }
 
     return PyImagingNew(ImagingConvertMatrix(self->image, mode, m));
@@ -1550,7 +1564,8 @@ _rotate(ImagingObject* self, PyObject* args)
 
     double theta;
     int filter = IMAGING_TRANSFORM_NEAREST;
-    if (!PyArg_ParseTuple(args, "d|i", &theta, &filter))
+    int expand;
+    if (!PyArg_ParseTuple(args, "d|i|i", &theta, &filter, &expand))
         return NULL;
 
     imIn = self->image;
@@ -1563,7 +1578,8 @@ _rotate(ImagingObject* self, PyObject* args)
         /* Rotate with resampling filter */
         imOut = ImagingNew(imIn->mode, imIn->xsize, imIn->ysize);
     (void) ImagingRotate(imOut, imIn, theta, filter);
-    } else if (theta == 90.0 || theta == 270.0) {
+    } else if ((theta == 90.0 || theta == 270.0)
+            && (expand || imIn->xsize == imIn->ysize)) {
         /* Use fast version */
         imOut = ImagingNew(imIn->mode, imIn->ysize, imIn->xsize);
         if (imOut) {
@@ -3011,9 +3027,6 @@ static struct PyMethodDef methods[] = {
     {"convert_transparent", (PyCFunction)_convert_transparent, 1},
     {"copy", (PyCFunction)_copy, 1},
     {"copy2", (PyCFunction)_copy2, 1},
-#ifdef WITH_CRACKCODE
-    {"crackcode", (PyCFunction)_crackcode, 1},
-#endif
     {"crop", (PyCFunction)_crop, 1},
     {"expand", (PyCFunction)_expand_image, 1},
     {"filter", (PyCFunction)_filter, 1},
@@ -3082,7 +3095,7 @@ static struct PyMethodDef methods[] = {
     {"unsharp_mask", (PyCFunction)_unsharp_mask, 1},
 #endif
 
-    {"box_blur", (PyCFunction)_box_blur, 1},    
+    {"box_blur", (PyCFunction)_box_blur, 1},
 
 #ifdef WITH_EFFECTS
     /* Special effects */

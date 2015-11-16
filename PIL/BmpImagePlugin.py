@@ -24,12 +24,10 @@
 #
 
 
-__version__ = "0.7"
-
-
 from PIL import Image, ImageFile, ImagePalette, _binary
 import math
 
+__version__ = "0.7"
 
 i8 = _binary.i8
 i16 = _binary.i16le
@@ -103,7 +101,9 @@ class BmpImageFile(ImageFile.ImageFile):
                 file_info['pixels_per_meter'] = (i32(header_data[20:24]), i32(header_data[24:28]))
                 file_info['colors'] = i32(header_data[28:32])
                 file_info['palette_padding'] = 4
-                self.info["dpi"] = tuple(map(lambda x: math.ceil(x / 39.3701), file_info['pixels_per_meter']))
+                self.info["dpi"] = tuple(
+                    map(lambda x: int(math.ceil(x / 39.3701)),
+                        file_info['pixels_per_meter']))
                 if file_info['compression'] == self.BITFIELDS:
                     if len(header_data) >= 52:
                         for idx, mask in enumerate(['r_mask', 'g_mask', 'b_mask', 'a_mask']):
@@ -279,3 +279,5 @@ Image.register_open(BmpImageFile.format, BmpImageFile, _accept)
 Image.register_save(BmpImageFile.format, _save)
 
 Image.register_extension(BmpImageFile.format, ".bmp")
+
+Image.register_mime(BmpImageFile.format, "image/bmp")

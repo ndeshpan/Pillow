@@ -6,20 +6,29 @@ language: python
 python:
   - "pypy"
   - "pypy3"
-  - 3.4
+  - 3.5
   - 2.7
   - 2.6
   - "2.7_with_system_site_packages" # For PyQt4
   - 3.2
   - 3.3
+  - 3.4
+  - nightly
 
 install:
   - "travis_retry sudo apt-get -qq install libfreetype6-dev liblcms2-dev python-qt4 ghostscript libffi-dev libjpeg-turbo-progs cmake imagemagick"
   - "travis_retry pip install cffi"
-  - travis_retry pip install "coverage>4.0a" nose
-  - "travis_retry pip install pyroma"
+  - "travis_retry pip install nose"
+  - "travis_retry pip install check-manifest"
+  - "travis_retry pip install Sphinx"
+    # Pyroma tests sometimes hang on PyPy and Python 2.6; skip for those
+  - if [ $TRAVIS_PYTHON_VERSION != "pypy" && $TRAVIS_PYTHON_VERSION != "2.6" ]; then travis_retry pip install pyroma; fi
 
   - if [ "$TRAVIS_PYTHON_VERSION" == "2.6" ]; then travis_retry pip install unittest2; fi
+
+  # Coveralls 4.0 doesn't support Python 3.2
+  - if [ "$TRAVIS_PYTHON_VERSION" == "3.2" ]; then travis_retry pip install coverage==3.7.1; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "3.2" ]; then travis_retry pip install coverage; fi
 
   # webp
   - pushd depends && ./install_webp.sh && popd
@@ -28,14 +37,22 @@ install:
   - pushd depends && ./install_openjpeg.sh && popd
 
 script:
-  - coverage erase
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage erase; fi
   - python setup.py clean
   - CFLAGS="-coverage" python setup.py build_ext --inplace
 
+<<<<<<< HEAD
   - coverage run --include=PIL/* selftest.py
   - coverage run --concurrency=multiprocessing -m nose -vx Tests/test_*.py --processes=-1 --process-timeout=600
   - coverage combine
   - coverage report
+=======
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --append --include=PIL/* selftest.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py; fi
+  - check-manifest --ignore "depends/*"
+  # Sphinx
+  - pushd docs; make html; make linkcheck; popd
+>>>>>>> upstream/master
 
 after_success:
    # gather the coverage data
@@ -103,6 +120,8 @@ after_script:
 
 matrix:
   fast_finish: true
+  allow_failures:
+    - python: nightly
 
 env:
   global:

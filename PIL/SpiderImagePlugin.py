@@ -158,6 +158,10 @@ class SpiderImageFile(ImageFile.ImageFile):
     def n_frames(self):
         return self._nimages
 
+    @property
+    def is_animated(self):
+        return self._nimages > 1
+
     # 1st image index is zero (although SPIDER imgnumber starts at 1)
     def tell(self):
         if self.imgnumber < 1:
@@ -281,8 +285,8 @@ def _save_spider(im, fp, filename):
 
 # --------------------------------------------------------------------
 
-Image.register_open("SPIDER", SpiderImageFile)
-Image.register_save("SPIDER", _save_spider)
+Image.register_open(SpiderImageFile.format, SpiderImageFile)
+Image.register_save(SpiderImageFile.format, _save_spider)
 
 if __name__ == "__main__":
 

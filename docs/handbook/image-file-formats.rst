@@ -54,8 +54,11 @@ GIF
 ^^^
 
 PIL reads GIF87a and GIF89a versions of the GIF file format. The library writes
-run-length encoded GIF87a files. Note that GIF files are always read as
-grayscale (``L``) or palette mode (``P``) images.
+run-length encoded files in GIF87a by default, unless GIF89a features
+are used or GIF89a is already in use.
+
+Note that GIF files are always read as grayscale (``L``)
+or palette mode (``P``) images.
 
 The :py:meth:`~PIL.Image.Image.open` method sets the following
 :py:attr:`~PIL.Image.Image.info` properties:
@@ -73,12 +76,32 @@ The :py:meth:`~PIL.Image.Image.open` method sets the following
 **version**
     Version (either ``GIF87a`` or ``GIF89a``).
 
+**duration**
+    May not be present. The time to display each frame of the GIF, in
+    milliseconds.
+
+**loop**
+    May not be present. The number of times the GIF should loop.
+
 Reading sequences
 ~~~~~~~~~~~~~~~~~
 
 The GIF loader supports the :py:meth:`~file.seek` and :py:meth:`~file.tell`
-methods. You can seek to the next frame (``im.seek(im.tell() + 1``), or rewind
+methods. You can seek to the next frame (``im.seek(im.tell() + 1)``), or rewind
 the file by seeking to the first frame. Random access is not supported.
+
+``im.seek()`` raises an ``EOFError`` if you try to seek after the last frame.
+
+Saving sequences
+~~~~~~~~~~~~~~~~
+
+When calling :py:meth:`~PIL.Image.Image.save`, if a multiframe image is used,
+by default only the first frame will be saved. To save all frames, the
+``save_all`` parameter must be present and set to ``True``.
+
+If present, the ``loop`` parameter can be used to set the number of times
+the GIF should loop, and the ``duration`` parameter can set the number of
+milliseconds between each frame.
 
 Reading local images
 ~~~~~~~~~~~~~~~~~~~~
@@ -114,8 +137,7 @@ PIL reads JPEG, JFIF, and Adobe JPEG files containing ``L``, ``RGB``, or
 
 Using the :py:meth:`~PIL.Image.Image.draft` method, you can speed things up by
 converting ``RGB`` images to ``L``, and resize images to 1/2, 1/4 or 1/8 of
-their original size while loading them. The :py:meth:`~PIL.Image.Image.draft`
-method also configures the JPEG decoder to trade some quality for speed.
+their original size while loading them.
 
 The :py:meth:`~PIL.Image.Image.open` method may set the following
 :py:attr:`~PIL.Image.Image.info` properties if available:
@@ -439,17 +461,37 @@ The :py:meth:`~PIL.Image.Image.open` method sets the following
 **compression**
     Compression mode.
 
+    .. versionadded:: 2.0.0
+
 **dpi**
-    Image resolution as an (xdpi, ydpi) tuple, where applicable. You can use
+    Image resolution as an ``(xdpi, ydpi)`` tuple, where applicable. You can use
     the :py:attr:`~PIL.Image.Image.tag` attribute to get more detailed
     information about the image resolution.
 
     .. versionadded:: 1.1.5
 
-In addition, the :py:attr:`~PIL.Image.Image.tag` attribute contains a
-dictionary of decoded TIFF fields. Values are stored as either strings or
-tuples. Note that only short, long and ASCII tags are correctly unpacked by
-this release.
+**resolution**
+    Image resolution as an ``(xres, yres)`` tuple, where applicable. This is a
+    measurement in whichever unit is specified by the file.
+
+    .. versionadded:: 1.1.5
+
+
+The :py:attr:`~PIL.Image.Image.tag_v2` attribute contains a dictionary of
+TIFF metadata. The keys are numerical indexes from `~PIL.TiffTags.TAGS_V2`.
+Values are strings or numbers for single items, multiple values are returned
+in a tuple of values. Rational numbers are returned as a single value.
+
+    .. versionadded:: 3.0.0
+
+For compatibility with legacy code, the
+:py:attr:`~PIL.Image.Image.tag` attribute contains a dictionary of
+decoded TIFF fields as returned prior to version 3.0.0.  Values are
+returned as either strings or tuples of numeric values. Rational
+numbers are returned as a tuple of ``(numerator, denominator)``.
+
+    .. deprecated:: 3.0.0
+
 
 Saving Tiff Images
 ~~~~~~~~~~~~~~~~~~
@@ -457,16 +499,22 @@ Saving Tiff Images
 The :py:meth:`~PIL.Image.Image.save` method can take the following keyword arguments:
 
 **tiffinfo**
-    A :py:class:`~PIL.TiffImagePlugin.ImageFileDirectory` object or dict
+    A :py:class:`~PIL.TiffImagePlugin.ImageFileDirectory_v2` object or dict
     object containing tiff tags and values. The TIFF field type is
     autodetected for Numeric and string values, any other types
-    require using an :py:class:`~PIL.TiffImagePlugin.ImageFileDirectory`
+    require using an :py:class:`~PIL.TiffImagePlugin.ImageFileDirectory_v2`
     object and setting the type in
-    :py:attr:`~PIL.TiffImagePlugin.ImageFileDirectory.tagtype` with
+    :py:attr:`~PIL.TiffImagePlugin.ImageFileDirectory_v2.tagtype` with
     the appropriate numerical value from
     ``TiffTags.TYPES``.
 
     .. versionadded:: 2.3.0
+
+    For compatibility with legacy code, a
+    `~PIL.TiffImagePlugin.ImageFileDirectory_v1` object may be passed
+    in this field. However, this is deprecated.
+
+    ..versionadded:: 3.0.0
 
 **compression**
     A string containing the desired compression method for the
@@ -737,6 +785,11 @@ PDF
 PIL can write PDF (Acrobat) images. Such images are written as binary PDF 1.1
 files, using either JPEG or HEX encoding depending on the image mode (and
 whether JPEG support is available or not).
+
+When calling :py:meth:`~PIL.Image.Image.save`, if a multiframe image is used,
+by default, only the first image will be saved. To save all frames, each frame
+to a separate page of the PDF, the ``save_all`` parameter must be present and
+set to ``True``.
 
 PIXAR (read only)
 ^^^^^^^^^^^^^^^^^

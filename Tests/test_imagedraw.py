@@ -5,13 +5,13 @@ from PIL import ImageColor
 from PIL import ImageDraw
 import os.path
 
+import sys
+
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GRAY = (190, 190, 190)
 DEFAULT_MODE = 'RGB'
 IMAGES_PATH = os.path.join('Tests', 'images', 'imagedraw')
-
-import sys
 
 # Image size
 W, H = 100, 100
@@ -44,13 +44,19 @@ class TestImageDraw(PillowTestCase):
         draw.polygon(list(range(100)))
         draw.rectangle(list(range(4)))
 
-    def test_deprecated(self):
-        im = hopper().copy()
+    def test_removed_methods(self):
+        im = hopper()
 
         draw = ImageDraw.Draw(im)
 
-        self.assert_warning(DeprecationWarning, lambda: draw.setink(0))
-        self.assert_warning(DeprecationWarning, lambda: draw.setfill(0))
+        self.assertRaises(Exception, lambda: draw.setink(0))
+        self.assertRaises(Exception, lambda: draw.setfill(0))
+
+    def test_mode_mismatch(self):
+        im = hopper("RGB").copy()
+
+        self.assertRaises(ValueError,
+                          lambda: ImageDraw.ImageDraw(im, mode="L"))
 
     def helper_arc(self, bbox):
         # Arrange
@@ -123,6 +129,19 @@ class TestImageDraw(PillowTestCase):
 
     def test_ellipse2(self):
         self.helper_ellipse(BBOX2)
+
+    def test_ellipse_edge(self):
+        # Arrange
+        im = Image.new("RGB", (W, H))
+        draw = ImageDraw.Draw(im)
+
+        # Act
+        draw.ellipse(((0, 0), (W-1, H)), fill="white")
+        del draw
+
+        # Assert
+        self.assert_image_similar(
+            im, Image.open("Tests/images/imagedraw_ellipse_edge.png"), 1)
 
     def helper_line(self, points):
         # Arrange

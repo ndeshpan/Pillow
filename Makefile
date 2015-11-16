@@ -1,5 +1,6 @@
 # https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html
 .PHONY: clean coverage doc docserve help inplace install install-req release-test sdist test upload upload-test
+.DEFAULT_GOAL := release-test
 
 clean:
 	python setup.py clean
@@ -74,3 +75,6 @@ upload-test:
 
 upload:
 	python setup.py sdist --format=gztar,zip upload
+
+readme:
+	viewdoc

@@ -19,7 +19,7 @@ i32 = _binary.i32be
 
 
 def _accept(prefix):
-    return i32(prefix) >= 20 and i32(prefix[4:8]) == 1
+    return len(prefix) >= 8 and i32(prefix) >= 20 and i32(prefix[4:8]) == 1
 
 
 ##
@@ -66,6 +66,6 @@ class GbrImageFile(ImageFile.ImageFile):
 #
 # registry
 
-Image.register_open("GBR", GbrImageFile, _accept)
+Image.register_open(GbrImageFile.format, GbrImageFile, _accept)
 
-Image.register_extension("GBR", ".gbr")
+Image.register_extension(GbrImageFile.format, ".gbr")

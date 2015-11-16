@@ -28,7 +28,10 @@ from __future__ import print_function
 
 from PIL import VERSION, PILLOW_VERSION, _plugins
 
+import logging
 import warnings
+
+logger = logging.getLogger(__name__)
 
 
 class DecompressionBombWarning(RuntimeWarning):
@@ -121,7 +124,7 @@ USE_CFFI_ACCESS = hasattr(sys, 'pypy_version_info')
 try:
     import cffi
     HAS_CFFI = True
-except:
+except ImportError:
     HAS_CFFI = False
 
 
@@ -137,11 +140,6 @@ def isImageType(t):
     :returns: True if the object is an image
     """
     return hasattr(t, "im")
-
-#
-# Debug level
-
-DEBUG = 0
 
 #
 # Constants (also defined in _imagingmodule.c!)
@@ -204,6 +202,7 @@ ID = []
 OPEN = {}
 MIME = {}
 SAVE = {}
+SAVE_ALL = {}
 EXTENSION = {}
 
 # --------------------------------------------------------------------
@@ -386,13 +385,10 @@ def init():
 
     for plugin in _plugins:
         try:
-            if DEBUG:
-                print("Importing %s" % plugin)
+            logger.debug("Importing %s", plugin)
             __import__("PIL.%s" % plugin, globals(), locals(), [])
-        except ImportError:
-            if DEBUG:
-                print("Image: failed to import", end=' ')
-                print(plugin, ":", sys.exc_info()[1])
+        except ImportError as e:
+            logger.debug("Image: failed to import %s: %s", plugin, e)
 
     if OPEN or SAVE:
         _initialized = 2
@@ -504,12 +500,21 @@ class Image(object):
         self.readonly = 0
         self.pyaccess = None
 
+    @property
+    def width(self):
+        return self.size[0]
+
+    @property
+    def height(self):
+        return self.size[1]
+
     def _new(self, im):
         new = Image()
         new.im = im
         new.mode = im.mode
         new.size = im.size
-        new.palette = self.palette
+        if self.palette:
+            new.palette = self.palette.copy()
         if im.mode == "P" and not new.palette:
             from PIL import ImagePalette
             new.palette = ImagePalette.ImagePalette()
@@ -545,8 +550,7 @@ class Image(object):
         try:
             self.fp.close()
         except Exception as msg:
-            if DEBUG:
-                print("Error closing: %s" % msg)
+            logger.debug("Error closing: %s" % msg)
 
         # Instead of simply setting to None, we're setting up a
         # deferred error that will better explain that the core image
@@ -643,7 +647,14 @@ class Image(object):
 
     def tobytes(self, encoder_name="raw", *args):
         """
-        Return image as a bytes object
+        Return image as a bytes object.
+        
+        .. warning::
+        
+            This method returns the raw image data from the internal
+            storage.  For compressed image data (e.g. PNG, JPEG) use
+            :meth:`~.save`, with a BytesIO parameter for in-memory
+            data.
 
         :param encoder_name: What encoder to use.  The default is to
                              use the standard "raw" encoder.
@@ -677,18 +688,9 @@ class Image(object):
 
         return b"".join(data)
 
-    # Declare tostring as alias to tobytes
     def tostring(self, *args, **kw):
-        """Deprecated alias to tobytes.
-
-        .. deprecated:: 2.0
-        """
-        warnings.warn(
-            'tostring() is deprecated. Please call tobytes() instead.',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.tobytes(*args, **kw)
+        raise Exception("tostring() has been removed. " +
+                        "Please call tobytes() instead.")
 
     def tobitmap(self, name="image"):
         """
@@ -738,14 +740,8 @@ class Image(object):
             raise ValueError("cannot decode image data")
 
     def fromstring(self, *args, **kw):
-        """Deprecated alias to frombytes.
-
-        .. deprecated:: 2.0
-        """
-        warnings.warn(
-            'fromstring() is deprecated. Please call frombytes() instead.',
-            DeprecationWarning)
-        return self.frombytes(*args, **kw)
+        raise Exception("fromstring() has been removed. " +
+                        "Please call frombytes() instead.")
 
     def load(self):
         """
@@ -818,7 +814,7 @@ class Image(object):
 
         :param mode: The requested mode. See: :ref:`concept-modes`.
         :param matrix: An optional conversion matrix.  If given, this
-           should be 4- or 16-tuple containing floating point values.
+           should be 4- or 12-tuple containing floating point values.
         :param dither: Dithering method, used when converting from
            mode "RGB" to "P" or from "RGB" or "L" to "1".
            Available methods are NONE or FLOYDSTEINBERG (default).
@@ -1244,27 +1240,8 @@ class Image(object):
         return self.im.histogram()
 
     def offset(self, xoffset, yoffset=None):
-        """
-        .. deprecated:: 2.0
-
-        .. note:: New code should use :py:func:`PIL.ImageChops.offset`.
-
-        Returns a copy of the image where the data has been offset by the given
-        distances. Data wraps around the edges. If **yoffset** is omitted, it
-        is assumed to be equal to **xoffset**.
-
-        :param xoffset: The horizontal distance.
-        :param yoffset: The vertical distance.  If omitted, both
-           distances are set to the same value.
-        :returns: An :py:class:`~PIL.Image.Image` object.
-        """
-        if warnings:
-            warnings.warn(
-                "'offset' is deprecated; use 'ImageChops.offset' instead",
-                DeprecationWarning, stacklevel=2
-                )
-        from PIL import ImageChops
-        return ImageChops.offset(self, xoffset, yoffset)
+        raise Exception("offset() has been removed. " +
+                        "Please call ImageChops.offset() instead.")
 
     def paste(self, im, box=None, mask=None):
         """
@@ -1617,7 +1594,7 @@ class Image(object):
         if self.mode in ("1", "P"):
             resample = NEAREST
 
-        return self._new(self.im.rotate(angle, resample))
+        return self._new(self.im.rotate(angle, resample, expand))
 
     def save(self, fp, format=None, **params):
         """
@@ -1636,7 +1613,7 @@ class Image(object):
         implement the ``seek``, ``tell``, and ``write``
         methods, and be opened in binary mode.
 
-        :param fp: File name or file object.
+        :param fp: A filename (string), pathlib.Path object or file object.
         :param format: Optional format override.  If omitted, the
            format to use is determined from the filename extension.
            If a file object was used instead of a filename, this
@@ -1649,17 +1626,27 @@ class Image(object):
            may have been created, and may contain partial data.
         """
 
+        filename = ""
+        open_fp = False
         if isPath(fp):
             filename = fp
-        else:
-            if hasattr(fp, "name") and isPath(fp.name):
-                filename = fp.name
-            else:
-                filename = ""
+            open_fp = True
+        elif sys.version_info >= (3, 4):
+            from pathlib import Path
+            if isinstance(fp, Path):
+                filename = str(fp.resolve())
+                open_fp = True
+        elif hasattr(fp, "name") and isPath(fp.name):
+            # only set the name for metadata purposes
+            filename = fp.name
 
         # may mutate self!
         self.load()
 
+        save_all = False
+        if 'save_all' in params:
+            save_all = params['save_all']
+            del params['save_all']
         self.encoderinfo = params
         self.encoderconfig = ()
 
@@ -1668,32 +1655,25 @@ class Image(object):
         ext = os.path.splitext(filename)[1].lower()
 
         if not format:
-            try:
-                format = EXTENSION[ext]
-            except KeyError:
+            if ext not in EXTENSION:
                 init()
-                try:
-                    format = EXTENSION[ext]
-                except KeyError:
-                    raise KeyError(ext)  # unknown extension
+            format = EXTENSION[ext]
 
-        try:
-            save_handler = SAVE[format.upper()]
-        except KeyError:
+        if format.upper() not in SAVE:
             init()
-            save_handler = SAVE[format.upper()]  # unknown format
-
-        if isPath(fp):
-            fp = builtins.open(fp, "wb")
-            close = 1
+        if save_all:
+            save_handler = SAVE_ALL[format.upper()]
         else:
-            close = 0
+            save_handler = SAVE[format.upper()]
+
+        if open_fp:
+            fp = builtins.open(filename, "wb")
 
         try:
             save_handler(self, fp, filename)
         finally:
             # do what we can to clean up
-            if close:
+            if open_fp:
                 fp.close()
 
     def seek(self, frame):
@@ -1935,6 +1915,20 @@ class Image(object):
         im = self.im.effect_spread(distance)
         return self._new(im)
 
+    def toqimage(self):
+        """Returns a QImage copy of this image"""
+        from PIL import ImageQt
+        if not ImageQt.qt_is_installed:
+            raise ImportError("Qt bindings are not installed")
+        return ImageQt.toqimage(self)
+
+    def toqpixmap(self):
+        """Returns a QPixmap copy of this image"""
+        from PIL import ImageQt
+        if not ImageQt.qt_is_installed:
+            raise ImportError("Qt bindings are not installed")
+        return ImageQt.toqpixmap(self)
+
 
 # --------------------------------------------------------------------
 # Lazy operations
@@ -2063,16 +2057,8 @@ def frombytes(mode, size, data, decoder_name="raw", *args):
 
 
 def fromstring(*args, **kw):
-    """Deprecated alias to frombytes.
-
-    .. deprecated:: 2.0
-    """
-    warnings.warn(
-        'fromstring() is deprecated. Please call frombytes() instead.',
-        DeprecationWarning,
-        stacklevel=2
-    )
-    return frombytes(*args, **kw)
+    raise Exception("fromstring() has been removed. " +
+                    "Please call frombytes() instead.")
 
 
 def frombuffer(mode, size, data, decoder_name="raw", *args):
@@ -2184,6 +2170,22 @@ def fromarray(obj, mode=None):
 
     return frombuffer(mode, size, obj, "raw", rawmode, 0, 1)
 
+
+def fromqimage(im):
+    """Creates an image instance from a QImage image"""
+    from PIL import ImageQt
+    if not ImageQt.qt_is_installed:
+        raise ImportError("Qt bindings are not installed")
+    return ImageQt.fromqimage(im)
+
+
+def fromqpixmap(im):
+    """Creates an image instance from a QPixmap image"""
+    from PIL import ImageQt
+    if not ImageQt.qt_is_installed:
+        raise ImportError("Qt bindings are not installed")
+    return ImageQt.fromqpixmap(im)
+
 _fromarray_typemap = {
     # (shape, typestr) => mode, rawmode
     # first two members of shape are set to one
@@ -2231,9 +2233,10 @@ def open(fp, mode="r"):
     :py:meth:`~PIL.Image.Image.load` method).  See
     :py:func:`~PIL.Image.new`.
 
-    :param file: A filename (string) or a file object.  The file object
-       must implement :py:meth:`~file.read`, :py:meth:`~file.seek`, and
-       :py:meth:`~file.tell` methods, and be opened in binary mode.
+    :param fp: A filename (string), pathlib.Path object or a file object.
+       The file object must implement :py:meth:`~file.read`,
+       :py:meth:`~file.seek`, and :py:meth:`~file.tell` methods,
+       and be opened in binary mode.
     :param mode: The mode.  If given, this argument must be "r".
     :returns: An :py:class:`~PIL.Image.Image` object.
     :exception IOError: If the file cannot be found, or the image cannot be
@@ -2243,11 +2246,15 @@ def open(fp, mode="r"):
     if mode != "r":
         raise ValueError("bad mode %r" % mode)
 
+    filename = ""
     if isPath(fp):
         filename = fp
-        fp = builtins.open(fp, "rb")
-    else:
-        filename = ""
+    elif sys.version_info >= (3, 4):
+        from pathlib import Path
+        if isinstance(fp, Path):
+            filename = str(fp.resolve())
+    if filename:
+        fp = builtins.open(filename, "rb")
 
     try:
         fp.seek(0)
@@ -2258,21 +2265,7 @@ def open(fp, mode="r"):
 
     preinit()
 
-    for i in ID:
-        try:
-            factory, accept = OPEN[i]
-            if not accept or accept(prefix):
-                fp.seek(0)
-                im = factory(fp, filename)
-                _decompression_bomb_check(im.size)
-                return im
-        except (SyntaxError, IndexError, TypeError, struct.error):
-            # import traceback
-            # traceback.print_exc()
-            pass
-
-    if init():
-
+    def _open_core(fp, filename, prefix):
         for i in ID:
             try:
                 factory, accept = OPEN[i]
@@ -2282,16 +2275,27 @@ def open(fp, mode="r"):
                     _decompression_bomb_check(im.size)
                     return im
             except (SyntaxError, IndexError, TypeError, struct.error):
-                # import traceback
-                # traceback.print_exc()
-                pass
+                # Leave disabled by default, spams the logs with image
+                # opening failures that are entirely expected.
+                #logger.debug("", exc_info=True)
+                continue
+        return None
+
+    im = _open_core(fp, filename, prefix)
+
+    if im is None:
+        if init():
+            im = _open_core(fp, filename, prefix)
+
+    if im:
+        return im
 
     raise IOError("cannot identify image file %r"
                   % (filename if filename else fp))
 
-
 #
 # Image processing.
+
 
 def alpha_composite(im1, im2):
     """
@@ -2428,6 +2432,18 @@ def register_save(id, driver):
     :param driver: A function to save images in this format.
     """
     SAVE[id.upper()] = driver
+
+
+def register_save_all(id, driver):
+    """
+    Registers an image function to save all the frames
+    of a multiframe format.  This function should not be
+    used in application code.
+
+    :param id: An image format identifier.
+    :param driver: A function to save images in this format.
+    """
+    SAVE_ALL[id.upper()] = driver
 
 
 def register_extension(id, extension):
