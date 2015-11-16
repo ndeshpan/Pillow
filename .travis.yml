@@ -41,18 +41,14 @@ script:
   - python setup.py clean
   - CFLAGS="-coverage" python setup.py build_ext --inplace
 
-<<<<<<< HEAD
   - coverage run --include=PIL/* selftest.py
   - coverage run --concurrency=multiprocessing -m nose -vx Tests/test_*.py --processes=-1 --process-timeout=600
   - coverage combine
   - coverage report
-=======
-  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --append --include=PIL/* selftest.py; fi
-  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py; fi
+
   - check-manifest --ignore "depends/*"
   # Sphinx
   - pushd docs; make html; make linkcheck; popd
->>>>>>> upstream/master
 
 after_success:
    # gather the coverage data
