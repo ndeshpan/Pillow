@@ -1,8 +1,5 @@
 language: python
 
-notifications:
-  irc: "chat.freenode.net#pil"
-
 # Run slow PyPy* first, to give them a headstart and reduce waiting time.
 # Run latest 3.x and 2.x next, to get quick compatibility results.
 # Then run the remainder.
@@ -45,7 +42,8 @@ script:
   - CFLAGS="-coverage" python setup.py build_ext --inplace
 
   - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --append --include=PIL/* selftest.py; fi
-  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" && $TRAVIS_PYTHON_VERSION == "3.2"]; then coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" && $TRAVIS_PYTHON_VERSION != "3.2"]; then coverage run --append --include=PIL/* --concurrency=multiprocessing -m nose -vx --processes=-1 --process-timeout=600 Tests/test_*.py; fi
   - check-manifest --ignore "depends/*"
   # Sphinx
   - pushd docs; make html; make linkcheck; popd
