@@ -1,8 +1,5 @@
 language: python
 
-notifications:
-  irc: "chat.freenode.net#pil"
-
 # Run slow PyPy* first, to give them a headstart and reduce waiting time.
 # Run latest 3.x and 2.x next, to get quick compatibility results.
 # Then run the remainder.
@@ -13,7 +10,7 @@ python:
   - 2.7
   - 2.6
   - "2.7_with_system_site_packages" # For PyQt4
-  - 3.2
+#  - 3.2  # skip for now because Coverage 4.0 doesn't support 3.2
   - 3.3
   - 3.4
   - nightly
