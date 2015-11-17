@@ -43,6 +43,9 @@ script:
 
   - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --include=PIL/* selftest.py; fi
   - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --include=PIL/* --concurrency=multiprocessing -m nose -vx --processes=-1 --process-timeout=600 Tests/test_*.py; fi
+  - coverage combine
+  - coverage report
+
   - check-manifest --ignore "depends/*"
   # Sphinx
   - pushd docs; make html; make linkcheck; popd
