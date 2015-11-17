@@ -41,10 +41,10 @@ script:
   - python setup.py clean
   - CFLAGS="-coverage" python setup.py build_ext --inplace
 
-  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" && $TRAVIS_PYTHON_VERSION == "3.2"]; then coverage run --append --include=PIL/* selftest.py; fi
-  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" && $TRAVIS_PYTHON_VERSION != "3.2"]; then coverage run --include=PIL/* selftest.py; fi
-  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" && $TRAVIS_PYTHON_VERSION == "3.2"]; then coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py; fi
-  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" && $TRAVIS_PYTHON_VERSION != "3.2"]; then coverage run --concurrency=multiprocessing --include=PIL/* -m nose -vx --processes=-1 --process-timeout=600 Tests/test_*.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" && $TRAVIS_PYTHON_VERSION == "3.2" ]; then coverage run --append --include=PIL/* selftest.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" && $TRAVIS_PYTHON_VERSION != "3.2" ]; then coverage run --include=PIL/* selftest.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" && $TRAVIS_PYTHON_VERSION == "3.2" ]; then coverage run --append --include=PIL/* -m nose -vx Tests/test_*.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" && $TRAVIS_PYTHON_VERSION != "3.2" ]; then coverage run --concurrency=multiprocessing --include=PIL/* -m nose -vx --processes=-1 --process-timeout=600 Tests/test_*.py; fi
   - coverage combine
   - coverage report
 
