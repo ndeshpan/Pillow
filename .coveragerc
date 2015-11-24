@@ -1,5 +1,9 @@
 # .coveragerc to control coverage.py
 
+[run]
+include =
+    PIL/*
+
 [report]
 # Regexes for lines to exclude from consideration
 exclude_lines =

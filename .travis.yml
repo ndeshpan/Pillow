@@ -41,8 +41,8 @@ script:
   - python setup.py clean
   - CFLAGS="-coverage" python setup.py build_ext --inplace
 
-  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --include=PIL/* selftest.py; fi
-  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --include=PIL/* --concurrency=multiprocessing -m nose -vx --processes=-1 --process-timeout=600 Tests/test_*.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run selftest.py; fi
+  - if [ "$TRAVIS_PYTHON_VERSION" != "nightly" ]; then coverage run --concurrency=multiprocessing -m nose -vx --processes=-1 --process-timeout=600 Tests/test_*.py; fi
   - coverage combine
   - coverage report
 
