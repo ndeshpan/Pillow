@@ -2,7 +2,8 @@ from helper import unittest, PillowTestCase, hopper
 
 from PIL import Image, MspImagePlugin
 
-TEST_FILE = "Tests/images/hopper.msp"
+TEST_FILE_RAW = "Tests/images/hopper.msp"
+TEST_FILE_MSP = "Tests/images/BLK.MSP"
 
 
 class TestFileMsp(PillowTestCase):
@@ -24,14 +25,22 @@ class TestFileMsp(PillowTestCase):
         self.assertRaises(SyntaxError,
                           lambda: MspImagePlugin.MspImageFile(invalid_file))
 
-    def test_open(self):
+    def test_open_raw(self):
         # Arrange
         # Act
-        im = Image.open(TEST_FILE)
+        im = Image.open(TEST_FILE_RAW)
 
         # Assert
         self.assertEqual(im.size, (128, 128))
         self.assert_image_similar(im, hopper("1"), 4)
+
+    def test_open_msp(self):
+        # Arrange
+        # Act
+        im = Image.open(TEST_FILE_MSP)
+
+        # Assert
+        self.assertEqual(im.size, (208, 144))
 
     def test_cannot_save_wrong_mode(self):
         # Arrange
